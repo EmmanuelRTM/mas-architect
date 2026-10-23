@@ -1,133 +1,133 @@
 # mas-architect
 
-Plugin de Claude Code para **diseñar, verificar, orquestar y monitorear sistemas multiagente** con base en la evidencia de 2026 (≈75 papers, jul–oct 2026) y en las guías oficiales de prompting de Claude Fable 5.1, Opus 5.5, Sonnet 5.5 y Haiku 5.5.
+A Claude Code plugin to **design, verify, orchestrate and monitor multi-agent systems**, grounded in the 2026 evidence (about 75 papers, Jul–Oct 2026) and in the official prompting guides for Claude Fable 5.1, Opus 5.5, Sonnet 5.5 and Haiku 5.5.
 
-La idea central de la investigación: agregar agentes sube la probabilidad de que *alguien* encuentre la respuesta, pero no la respuesta final del equipo. Lo que limita es la **selección**, el **contexto acumulado**, la **verificación** y el **cierre** (controles, validación, entrega). El plugin empuja cada diseño hacia equipos pequeños, decorrelacionados y desechables, con un buen selector, un verificador independiente, dueños y monitores explícitos por tarea, y el modelo y el nivel de razonamiento correctos por rol.
+The research's central finding: adding agents raises the chance that *someone* finds the answer, not the team's final answer. The binding constraints are **selection**, **accumulated context**, **verification** and **closure** (controls, validation, delivery). The plugin pushes every design toward small, decorrelated, disposable teams with a good selector, an independent verifier, explicit owners and monitors per task, and the right model and reasoning level per role.
 
-## Qué incluye
+## What is included
 
-| Componente | Contenido |
+| Component | Contents |
 |---|---|
-| **Skills** | `mas-design` (flujo de 14 pasos), `mas-patterns` (9 patrones con evidencia), `mas-selection-verification`, `mas-model-selection` (modelo + esfuerzo por rol), `mas-evaluation` (línea base, ρ, cierre, corridas repetidas, sondas de creencia), `mas-orchestration` (prompt del líder, límites, caché, presupuesto), `mas-audit` |
-| **Agentes** | `mas-architect` (opus/high), `mas-critic` revisor ciego sin memoria (fable/high), `mas-model-planner` (sonnet/medium), `mas-prompt-writer` (opus/medium), `mas-verification-designer` (opus/high), `mas-orchestration-writer` (opus/medium), `mas-system-auditor` (opus/medium). Cada uno precarga sólo sus skills (ver abajo) |
-| **Comandos** | `/mas-architect:new`, `baseline`, `lint`, `models`, `verify`, `generate`, `review`, `audit` y `/mas-panel` |
-| **Hooks deterministas** | Bloqueo de secretos por regex, linter de specs `*.mas.json` (40 reglas), linter de agentes/skills (14 reglas DEF), contrato de delegación (criterio de terminado), recordatorio de límites de la plataforma al iniciar la sesión |
-| **Mod / panel** | Panel lateral en vivo: subagentes activos vs límite de concurrencia, profundidad de anidado, agentes vivos sin progreso, tokens y lectura de caché por agente, bucles de error, costo de la sesión, salud del spec por práctica, N_eff, monitoreo (P9) y hallazgos principales |
-| **Plantillas** | `templates/spec.schema.json` y 7 ejemplos limpios (`deep-research`, `optimization-swarm`, `codebase-team`, `qa-selector`, `agent-router`, `proxy-eval-loop`, `co-scientist`) |
+| **Skills** | `mas-design` (14-step workflow), `mas-patterns` (9 evidence-backed patterns), `mas-selection-verification`, `mas-model-selection` (model + effort per role), `mas-evaluation` (baseline, rho, closure, repeated runs, belief probes), `mas-orchestration` (lead prompt, limits, cache, budget), `mas-audit` |
+| **Agents** | `mas-architect` (opus/high), `mas-critic` blind memoryless reviewer (fable/high), `mas-model-planner` (sonnet/medium), `mas-prompt-writer` (opus/medium), `mas-verification-designer` (opus/high), `mas-orchestration-writer` (opus/medium), `mas-system-auditor` (opus/medium). Each preloads only its own skills (see below) |
+| **Commands** | `/mas-architect:new`, `baseline`, `lint`, `models`, `verify`, `generate`, `review`, `audit` and `/mas-panel` |
+| **Deterministic hooks** | Regex secret guard, `*.mas.json` spec linter (40 rules), agent/skill definition linter (14 DEF rules), delegation contract (done criterion), platform-limits reminder at session start |
+| **Mod / panel** | Live side panel: active subagents vs the concurrency limit, nesting depth, agents alive but not progressing, tokens and cache-read share per agent, failure loops, session cost, spec health per practice, N_eff, monitoring (P9) and top findings |
+| **Templates** | `templates/spec.schema.json` and 7 lint-clean examples (`deep-research`, `optimization-swarm`, `codebase-team`, `qa-selector`, `agent-router`, `proxy-eval-loop`, `co-scientist`) |
 
-## Instalación
+## Installation
 
-Requisitos: Claude Code reciente y `python3` (3.10+) en el `PATH`. Sin dependencias externas; PyYAML es opcional para specs `.mas.yaml`.
+Requirements: a recent Claude Code and `python3` (3.10+) on the `PATH`. No external dependencies; PyYAML is optional for `.mas.yaml` specs.
 
 ```text
 /plugin install mas-architect --marketplace EmmanuelRTM/mas-architect
 ```
 
-Durante el desarrollo, desde la carpeta del repo:
+During development, from the repository folder:
 
 ```bash
 claude --plugin-dir .
 ```
 
-## Uso rápido
+## Quick start
 
-1. `/mas-architect:baseline "equipo para responder preguntas de arquitectura sobre nuestro monorepo"` mide (o planea) el mejor agente individual con el mismo presupuesto, al menos 3 corridas, y estima la correlación de errores ρ.
-2. `/mas-architect:new "..."` delega el diseño al agente `mas-architect`, que sigue `mas-design`: criterios de cierre → línea base → ρ y presupuesto → forma de la tarea → patrón → modelos y esfuerzo → dueños y monitores → selección y verificación → monitoreo → spec `.mas.json`.
-3. Cada vez que se escribe el spec, el hook lo lintea: los **errores bloquean** y Claude los corrige; las advertencias regresan como contexto.
-4. `/mas-architect:review` entrega sólo la ruta del spec a `mas-critic`, que lo revisa sin ver el razonamiento del autor.
-5. `/mas-architect:verify` hace que `mas-verification-designer` escriba el procedimiento del selector, la skill de rúbrica del juez y el protocolo de sondas, latidos y cierre.
-6. `/mas-architect:generate` produce los artefactos: archivos de agente por modelo (`mas-prompt-writer`), prompt del líder o script de workflow y tabla de presupuesto (`mas-orchestration-writer`).
-7. `/mas-panel` abre el panel de control mientras el equipo corre.
+1. `/mas-architect:baseline "a team that answers architecture questions about our monorepo"` measures (or plans) the strongest single agent at the same budget, at least 3 runs, and estimates the error correlation rho.
+2. `/mas-architect:new "..."` delegates the design to the `mas-architect` agent, which follows `mas-design`: closure criteria → baseline → rho and budget → task shape → pattern → models and effort → owners and monitors → selection and verification → monitoring → `.mas.json` spec.
+3. Every time the spec is written, the hook lints it: **errors block** and Claude fixes them; warnings come back as context.
+4. `/mas-architect:review` hands only the spec path to `mas-critic`, which reviews it without seeing the author's rationale.
+5. `/mas-architect:verify` has `mas-verification-designer` write the selector procedure, the judge's rubric skill and the probe, heartbeat and closure protocol.
+6. `/mas-architect:generate` produces the artifacts: per-model agent files (`mas-prompt-writer`), the lead prompt or workflow script and the budget table (`mas-orchestration-writer`).
+7. `/mas-panel` opens the control panel while the team runs.
 
-CLI directo (sin Claude):
+Direct CLI (without Claude):
 
 ```bash
 python3 scripts/mas_lint_cli.py lint templates/examples/deep-research.mas.json
 python3 scripts/mas_lint_cli.py recommend templates/examples/deep-research.mas.json
-python3 scripts/mas_lint_cli.py neff 30 0.9      # tamaño efectivo del equipo
-python3 scripts/mas_lint_cli.py rules            # lista de reglas (--markdown para docs/RULES.md)
+python3 scripts/mas_lint_cli.py neff 30 0.9      # effective team size
+python3 scripts/mas_lint_cli.py rules            # rule list (--markdown for docs/RULES.md)
 ```
 
-## Las diez prácticas y lo que el linter revisa
+## The ten practices and what the linter checks
 
-| Práctica | Reglas |
+| Practice | Rules |
 |---|---|
-| P1 Medir primero la línea base de un solo agente (≥3 corridas, techo del métrico) | MAS001 |
-| P2 Generar de forma independiente con modelos diversos; sin difundir soluciones; sin crítica sobre objetivos calificados | MAS002, MAS003, MAS017, MAS034 |
-| P3 Invertir en selección, no en más votantes | MAS004, MAS005 |
-| P4 Estado en el harness; agentes desechables; política de reinicio completa | MAS006, MAS007, MAS039 |
-| P5 Acotar cada lectura: top-K, podar herramientas, descartar salida vieja sin resumirla | MAS008, MAS029, MAS031, MAS036 |
-| P6 Comunicación no bloqueante, dueños y monitores por tarea, descomposición real, memoria que conserva el desacuerdo | MAS009, MAS010, MAS011, MAS033, MAS035, MAS038 |
-| P7 Evidencia cruda, no resúmenes, al que fusiona | MAS012 |
-| P8 Separar al juez del generador | MAS013, MAS032 |
-| P9 Monitorear creencias, compromisos y corridas repetidas | MAS014, MAS015, MAS037 |
-| P10 Entrenar con crédito de equipo | MAS021 |
-| MOD Modelo y esfuerzo por rol | MAS022–MAS028 |
-| OPS Límites de la plataforma, esquema, higiene | MAS000, MAS016, MAS018, MAS019, MAS020, MAS030 |
+| P1 Measure the single-agent baseline first (≥3 runs, metric ceiling) | MAS001 |
+| P2 Generate independently with diverse models; no solution broadcast; no critique on graded objectives | MAS002, MAS003, MAS017, MAS034 |
+| P3 Spend on selection, not on more voters | MAS004, MAS005 |
+| P4 State in the harness; disposable agents; complete reset policy | MAS006, MAS007, MAS039 |
+| P5 Cap every read: top-K, prune tools, drop stale output without summarizing it | MAS008, MAS029, MAS031, MAS036 |
+| P6 Non-blocking communication, owners and monitors per task, real decomposition, memory that keeps disagreement | MAS009, MAS010, MAS011, MAS033, MAS035, MAS038 |
+| P7 Raw evidence, not summaries, to the merger | MAS012 |
+| P8 Separate the judge from the generator | MAS013, MAS032 |
+| P9 Monitor beliefs, commitments and repeated runs | MAS014, MAS015, MAS037 |
+| P10 Train with team-level credit | MAS021 |
+| MOD Model and effort per role | MAS022–MAS028 |
+| OPS Platform limits, schema, hygiene | MAS000, MAS016, MAS018, MAS019, MAS020, MAS030 |
 
-Catálogo completo con la evidencia de cada regla: [docs/RULES.md](docs/RULES.md).
+Full catalog with the evidence behind each rule: [docs/RULES.md](docs/RULES.md).
 
-## Modelo y nivel de razonamiento por rol
+## Model and reasoning level per role
 
-| Rol | Modelo @ esfuerzo inicial |
+| Role | Model @ starting effort |
 |---|---|
-| Orquestador / advisor sin estado | Opus 5.5 @ medium (Fable 5.1 @ high para ciencia ambigua o autonomía de días) |
+| Stateless orchestrator / advisor | Opus 5.5 @ medium (Fable 5.1 @ high for ambiguous science or multi-day autonomy) |
 | Planner | Opus 5.5 @ high |
-| Worker en repos grandes | Opus 5.5 @ medium |
-| Worker en optimización | Sonnet 5.5 @ high |
-| Researcher (mucha búsqueda) | Sonnet 5.5 @ high |
+| Worker on large repositories | Opus 5.5 @ medium |
+| Worker in optimization loops | Sonnet 5.5 @ high |
+| Researcher (search-heavy) | Sonnet 5.5 @ high |
 | Editor / merge | Opus 5.5 @ medium |
-| Juez / verificador / crítico | Opus 5.5 @ high, sin memoria, distinto modelo que los generadores |
+| Judge / verifier / critic | Opus 5.5 @ high, memoryless, a different model from the generators |
 | Selector | Haiku 5.5 @ medium |
-| Router sobre top-K | Haiku 5.5 @ low |
+| Router over top-K | Haiku 5.5 @ low |
 
-Es un punto de partida: barre los niveles de esfuerzo con tus propios evals. Mezcla familias sólo en pools de réplicas independientes; nunca emparejes un modelo fuerte con uno mucho más débil en una tarea donde se reparten la información. Detalle en `skills/mas-model-selection/`.
+This is a starting point: sweep effort levels on your own evals. Mix families only in independent replica pools; never pair a strong model with a much weaker one on a task where they split the information. Details in `skills/mas-model-selection/`.
 
-## Skills por agente
+## Skills per agent
 
-Los subagentes no heredan las skills de la sesión, así que cada agente declara en `skills:` las que precarga. Cada una inyecta su `SKILL.md` completo al arrancar, por eso se limitan a lo que el rol usa siempre.
+Subagents do not inherit the session's skills, so each agent declares the ones it preloads in `skills:`. Each one injects its full `SKILL.md` at startup, which is why they are limited to what the role always uses.
 
-| Agente | Skills precargadas | Por qué |
+| Agent | Preloaded skills | Why |
 |---|---|---|
-| `mas-architect` | `mas-design`, `mas-patterns`, `mas-selection-verification`, `mas-model-selection` | Diseña de punta a punta |
-| `mas-critic` | `mas-audit`, `mas-selection-verification` | Revisa con la lista de fallas, sin el playbook del autor (independencia del juez) |
-| `mas-model-planner` | `mas-model-selection` | Sólo decide modelo y esfuerzo |
-| `mas-prompt-writer` | `mas-model-selection` | Reglas de prompting por modelo |
-| `mas-verification-designer` | `mas-selection-verification`, `mas-evaluation` | Selector, rúbrica del juez, sondas, cierre |
-| `mas-orchestration-writer` | `mas-orchestration`, `mas-patterns` | Prompt del líder, workflow, límites y presupuesto |
-| `mas-system-auditor` | `mas-audit` | Reconstruye el spec de un sistema existente |
+| `mas-architect` | `mas-design`, `mas-patterns`, `mas-selection-verification`, `mas-model-selection` | Designs end to end |
+| `mas-critic` | `mas-audit`, `mas-selection-verification` | Reviews with the failure checklist, without the author's playbook (judge independence) |
+| `mas-model-planner` | `mas-model-selection` | Only decides model and effort |
+| `mas-prompt-writer` | `mas-model-selection` | Per-model prompting rules |
+| `mas-verification-designer` | `mas-selection-verification`, `mas-evaluation` | Selector, judge rubric, probes, closure |
+| `mas-orchestration-writer` | `mas-orchestration`, `mas-patterns` | Lead prompt, workflow, limits and budget |
+| `mas-system-auditor` | `mas-audit` | Reconstructs the spec of an existing system |
 
-Para los sistemas que diseñes, el spec lleva un catálogo `skills` y una lista `skills` por agente. Las reglas MAS029–MAS032 y DEF012–DEF014 revisan que esté declarada, que exista, que no pase de 4 y que los jueces no compartan el playbook de los generadores. Guía completa: [skill-assignment.md](skills/mas-design/references/skill-assignment.md).
+For the systems you design, the spec carries a `skills` catalog and a `skills` list per agent. Rules MAS029–MAS032 and DEF012–DEF014 check that it is declared, that it exists, that it stays at 4 or fewer, and that judges do not share the generators' playbook. Full guide: [skill-assignment.md](skills/mas-design/references/skill-assignment.md).
 
-## Configuración
+## Configuration
 
-| Opción (`userConfig`) | Default | Uso |
+| Option (`userConfig`) | Default | Use |
 |---|---|---|
-| `maxConcurrentSubagents` | 20 | Límite que muestra el panel (igual a `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS`; la variable de entorno se lee primero) |
-| `reportPath` | `.mas/last-report.json` | Reporte que lee el panel (si `MAS_ARCHITECT_REPORT_DIR` está definida, se usa `<dir>/last-report.json`) |
-| `staleAfterSeconds` | 120 | Segundos sin turno ni tool call tras los que un agente `running` se marca `stalled?` (vivo pero sin progreso, Agent Status Protocol) |
-| `maxNestingDepth` | 3 | Profundidad máxima de anidamiento de subagentes (Claude Code permite 3); la fila `nesting` se pinta en rojo al alcanzarla |
-| `maxConcurrentWorkflowAgents` | 16 | Límite de la segunda barra: agentes lanzados por un script Workflow (`maxConcurrency` por defecto 16) |
-| `refreshSeconds` | 3 | Intervalo de refresco del panel abierto; los eventos (spawn, turnos, tool calls, edición de `*.mas.json`) lo refrescan antes |
+| `maxConcurrentSubagents` | 20 | Concurrent-subagent limit shown by the panel; when unset, `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS` is read |
+| `reportPath` | `.mas/last-report.json` | Report the panel reads; when unset and `MAS_ARCHITECT_REPORT_DIR` exists, `<dir>/last-report.json` is used |
+| `staleAfterSeconds` | 120 | Seconds without a turn or tool call after which a `running` agent is marked `stalled?` (alive but not progressing, Agent Status Protocol) |
+| `maxNestingDepth` | 3 | Maximum subagent nesting depth (Claude Code allows 3); the `nesting` row turns red when reached |
+| `maxConcurrentWorkflowAgents` | 16 | Limit of the second bar: agents started by a Workflow script (`maxConcurrency` defaults to 16) |
+| `refreshSeconds` | 3 | Refresh interval of the open panel; events (spawn, turns, tool calls, `*.mas.json` edits) refresh it sooner |
 
-| Variable de entorno | Efecto |
+| Environment variable | Effect |
 |---|---|
-| `MAS_ARCHITECT_SPAWN_CONTRACT` | `advise` (default), `strict` (niega delegaciones sin criterio de terminado) u `off` |
-| `MAS_ARCHITECT_REPORT_DIR` | Carpeta alternativa para los reportes del linter (el panel la respeta) |
-| `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS` | Límite real de subagentes concurrentes de Claude Code; el panel lo usa como referencia |
+| `MAS_ARCHITECT_SPAWN_CONTRACT` | `advise` (default), `strict` (denies delegations without a done criterion) or `off` |
+| `MAS_ARCHITECT_REPORT_DIR` | Alternative folder for the linter reports (the panel honours it) |
+| `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS` | Claude Code's real concurrent-subagent limit; the panel uses it as the reference |
 
-Agrega `.mas/` a tu `.gitignore`: contiene reportes generados.
+Add `.mas/` to your `.gitignore`: it holds generated reports.
 
-## Desarrollo
+## Development
 
 ```bash
-pytest                    # ~240 tests del linter, hooks y contenido del plugin
-claude plugin test .      # tests del panel en terminal, desktop, vscode y mobile
+pytest                    # ~240 tests for the linter, hooks and plugin content
+claude plugin test .      # panel tests on terminal, desktop, vscode and mobile
 claude plugin validate .
 ```
 
-Documentación: [arquitectura](docs/ARCHITECTURE.md) · [catálogo de reglas](docs/RULES.md) · [formato del spec](skills/mas-design/references/spec-format.md) · [cambios](CHANGELOG.md).
+Documentation: [architecture](docs/ARCHITECTURE.md) · [rule catalog](docs/RULES.md) · [spec format](skills/mas-design/references/spec-format.md) · [changes](CHANGELOG.md).
 
-## Licencia
+## License
 
-MIT. Ver [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).

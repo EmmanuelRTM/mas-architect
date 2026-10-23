@@ -23,8 +23,8 @@ def test_rules_markdown_prints_both_tables():
 
     code, text = _run("rules", "--markdown")
     assert code == 0
-    assert "| Regla | Práctica | Qué verifica | Evidencia |" in text
-    assert "| Regla | Severidad | Qué verifica |" in text
+    assert "| Rule | Practice | What it checks | Evidence |" in text
+    assert "| Rule | Severity | What it checks |" in text
     for rule in registered():
         assert f"| {rule.id} | {rule.practice} | {rule.title} |" in text
     assert "| DEF001 | error |" in text

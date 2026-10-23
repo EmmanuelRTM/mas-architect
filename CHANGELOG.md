@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.1 — 2026-10-23
+
+- Everything the plugin ships is now in English: README, architecture notes, rule catalog (practice titles, DEF rule descriptions, hook table) and the `rules --markdown` output. The delegation-contract hook still recognises Spanish done-criterion phrases in prompts.
+
 ## 0.3.0 — 2026-10-23
 
 Audit of the whole plugin against the research synthesis (≈75 papers, Jul–Oct 2026) and the model prompting guides. Gaps closed:

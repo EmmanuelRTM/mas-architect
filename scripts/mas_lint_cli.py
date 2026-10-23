@@ -54,9 +54,9 @@ def cmd_rules(args) -> int:
 def rules_markdown() -> str:
     """The two tables of docs/RULES.md, so the doc can be regenerated from the code."""
     cell = lambda text: " ".join(str(text).split()).replace("|", "\\|")  # noqa: E731
-    lines = ["## Reglas de spec (`*.mas.json`)", "", "| Regla | Práctica | Qué verifica | Evidencia |", "|---|---|---|---|"]
+    lines = ["## Spec rules (`*.mas.json`)", "", "| Rule | Practice | What it checks | Evidence |", "|---|---|---|---|"]
     lines += [f"| {r.id} | {r.practice} | {cell(r.title)} | {cell(r.evidence)} |" for r in registered()]
-    lines += ["", "## Reglas de definiciones (`agents/*.md`, `skills/*/SKILL.md`)", "", "| Regla | Severidad | Qué verifica |", "|---|---|---|"]
+    lines += ["", "## Definition rules (`agents/*.md`, `skills/*/SKILL.md`)", "", "| Rule | Severity | What it checks |", "|---|---|---|"]
     lines += [f"| {rid} | {severity} | {what} |" for rid, severity, what in DEFINITION_RULES]
     return "\n".join(lines)
 

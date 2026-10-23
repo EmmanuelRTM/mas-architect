@@ -23,20 +23,20 @@ MAX_SKILL_LINES = 500
 
 # (rule id, severities, what it checks) — the DEF table of docs/RULES.md.
 DEFINITION_RULES: tuple[tuple[str, str, str], ...] = (
-    ("DEF001", "error", "Existe el bloque YAML frontmatter"),
-    ("DEF002", "error", "`name` en kebab-case, ≤ 64 caracteres"),
-    ("DEF003", "error / warning", f"`description` presente (≤ {MAX_DESCRIPTION} caracteres)"),
-    ("DEF004", "warning", "El agente declara `tools` (mínimo privilegio)"),
-    ("DEF005", "warning", "`model` es un alias o id de Claude válido"),
-    ("DEF006", "error", "El cuerpo (system prompt / instrucciones) no está vacío"),
-    ("DEF007", "error", "Sin secretos en el archivo"),
-    ("DEF008", "warning", f"`SKILL.md` ≤ {MAX_SKILL_LINES} líneas"),
-    ("DEF009", "warning", "El nombre del skill coincide con su carpeta"),
-    ("DEF010", "info / error", "`effort` declarado y válido"),
-    ("DEF011", "error / warning", "No pide razonamiento visible en la respuesta (`reasoning_extraction`)"),
-    ("DEF012", "warning", "Cada skill en `skills:` es kebab-case (u `plugin:skill`) y existe junto al agente"),
-    ("DEF013", "warning", "`Skill` no va en `tools`; se usa el campo `skills:`"),
-    ("DEF014", "info / warning", f"El agente declara `skills` (los subagentes no heredan los del padre) y precarga ≤ {MAX_PRELOADED_SKILLS}"),
+    ("DEF001", "error", "YAML frontmatter block present"),
+    ("DEF002", "error", "`name` in kebab-case, at most 64 characters"),
+    ("DEF003", "error / warning", f"`description` present (at most {MAX_DESCRIPTION} characters)"),
+    ("DEF004", "warning", "The agent declares `tools` (least privilege)"),
+    ("DEF005", "warning", "`model` is a valid Claude alias or id"),
+    ("DEF006", "error", "The body (system prompt / instructions) is not empty"),
+    ("DEF007", "error", "No secrets in the file"),
+    ("DEF008", "warning", f"`SKILL.md` at most {MAX_SKILL_LINES} lines"),
+    ("DEF009", "warning", "The skill name matches its folder"),
+    ("DEF010", "info / error", "`effort` declared and valid"),
+    ("DEF011", "error / warning", "Does not ask for visible reasoning in the reply (`reasoning_extraction`)"),
+    ("DEF012", "warning", "Every entry in `skills:` is kebab-case (or `plugin:skill`) and exists next to the agent"),
+    ("DEF013", "warning", "`Skill` does not belong in `tools`; use the `skills:` field"),
+    ("DEF014", "info / warning", f"The agent declares `skills` (subagents do not inherit the parent's) and preloads at most {MAX_PRELOADED_SKILLS}"),
 )
 
 

@@ -1,29 +1,29 @@
-# Catálogo de reglas
+# Rule catalog
 
-Generado desde `scripts/mas_lint/rules/` (`python3 scripts/mas_lint_cli.py rules --markdown` imprime las dos tablas). Un test verifica que este archivo liste todas las reglas.
+Generated from `scripts/mas_lint/rules/` (`python3 scripts/mas_lint_cli.py rules --markdown` prints the two rule tables). A test checks that this file lists every rule.
 
-Severidades: **error** bloquea (el hook devuelve `decision: block`), **warning** se devuelve como contexto, **info** sólo informa.
+Severities: **error** blocks (the hook returns `decision: block`), **warning** comes back as context, **info** only informs.
 
-## Prácticas
+## Practices
 
-| Id | Práctica |
+| Id | Practice |
 |---|---|
-| P1 | Medir primero la línea base de un solo agente fuerte |
-| P2 | Generar de forma independiente con familias de modelos diversas |
-| P3 | Invertir en selección, no en más votantes |
-| P4 | Estado en el harness; agentes desechables |
-| P5 | Acotar cada lectura (top-K, podar herramientas) |
-| P6 | Comunicación no bloqueante y dueños explícitos |
-| P7 | Pasar evidencia cruda, no resúmenes, al que fusiona |
-| P8 | Separar al juez del generador |
-| P9 | Monitorear creencias y corridas repetidas |
-| P10 | Entrenar con crédito de equipo y agentes decorrelacionados |
-| MOD | Asignar modelo y esfuerzo por rol a propósito |
-| OPS | Respetar límites de plataforma, esquema e higiene |
+| P1 | Measure the strong single-agent baseline first |
+| P2 | Generate independently across diverse model families |
+| P3 | Spend on selection, not on more voters |
+| P4 | Keep state in the harness; agents are disposable |
+| P5 | Cap every read (top-K, prune tools, drop stale output) |
+| P6 | Non-blocking communication and explicit ownership |
+| P7 | Hand raw evidence, not summaries, to the merger |
+| P8 | Separate the judge from the generator |
+| P9 | Monitor beliefs and repeated runs, not only transcripts |
+| P10 | Train with team-level credit and decorrelated agents |
+| MOD | Assign model and effort per role deliberately |
+| OPS | Respect platform limits, schema and hygiene |
 
-## Reglas de spec (`*.mas.json`)
+## Spec rules (`*.mas.json`)
 
-| Regla | Práctica | Qué verifica | Evidencia |
+| Rule | Practice | What it checks | Evidence |
 |---|---|---|---|
 | MAS000 | OPS | Spec structure |  |
 | MAS001 | P1 | Single-agent baseline measured | Coordination's benefit shrinks as the single agent strengthens: a capability-saturation threshold predicted the coordination effect in 94% of validation configurations (Nature MI 2026) and the Collaboration Tax's penalty shrinks for stronger models (arXiv 2608.22152). |
@@ -66,31 +66,31 @@ Severidades: **error** bloquea (el hook devuelve `decision: block`), **warning**
 | MAS038 | P6 | Checkable done criteria and a monitoring delegator | Closure reached in 32.7% of attempts and in all three runs on 18.0% of tasks (PhysClosureBench); 86% of the best model's deficit was failed delivery (OR-License); the delegator stays responsible for monitoring and recovery (RCM 2610.21243). |
 | MAS039 | P4 | Reset policy is complete | Fork alone 0.57, flush alone 0.55, both 0.71 vs 0.45 (2610.07447); 100M tokens split three ways at the measured inflection beat one session by +264 Elo (2609.15309); start-many-then-prune 12 -> 5 -> 2 -> 1 (2607.18235). |
 
-## Reglas de definiciones (`agents/*.md`, `skills/*/SKILL.md`)
+## Definition rules (`agents/*.md`, `skills/*/SKILL.md`)
 
-| Regla | Severidad | Qué verifica |
+| Rule | Severity | What it checks |
 |---|---|---|
-| DEF001 | error | Existe el bloque YAML frontmatter |
-| DEF002 | error | `name` en kebab-case, ≤ 64 caracteres |
-| DEF003 | error / warning | `description` presente (≤ 1024 caracteres) |
-| DEF004 | warning | El agente declara `tools` (mínimo privilegio) |
-| DEF005 | warning | `model` es un alias o id de Claude válido |
-| DEF006 | error | El cuerpo (system prompt / instrucciones) no está vacío |
-| DEF007 | error | Sin secretos en el archivo |
-| DEF008 | warning | `SKILL.md` ≤ 500 líneas |
-| DEF009 | warning | El nombre del skill coincide con su carpeta |
-| DEF010 | info / error | `effort` declarado y válido |
-| DEF011 | error / warning | No pide razonamiento visible en la respuesta (`reasoning_extraction`) |
-| DEF012 | warning | Cada skill en `skills:` es kebab-case (u `plugin:skill`) y existe junto al agente |
-| DEF013 | warning | `Skill` no va en `tools`; se usa el campo `skills:` |
-| DEF014 | info / warning | El agente declara `skills` (los subagentes no heredan los del padre) y precarga ≤ 4 |
+| DEF001 | error | YAML frontmatter block present |
+| DEF002 | error | `name` in kebab-case, at most 64 characters |
+| DEF003 | error / warning | `description` present (at most 1024 characters) |
+| DEF004 | warning | The agent declares `tools` (least privilege) |
+| DEF005 | warning | `model` is a valid Claude alias or id |
+| DEF006 | error | The body (system prompt / instructions) is not empty |
+| DEF007 | error | No secrets in the file |
+| DEF008 | warning | `SKILL.md` at most 500 lines |
+| DEF009 | warning | The skill name matches its folder |
+| DEF010 | info / error | `effort` declared and valid |
+| DEF011 | error / warning | Does not ask for visible reasoning in the reply (`reasoning_extraction`) |
+| DEF012 | warning | Every entry in `skills:` is kebab-case (or `plugin:skill`) and exists next to the agent |
+| DEF013 | warning | `Skill` does not belong in `tools`; use the `skills:` field |
+| DEF014 | info / warning | The agent declares `skills` (subagents do not inherit the parent's) and preloads at most 4 |
 
 ## Hooks
 
-| Hook | Evento | Comportamiento |
+| Hook | Event | Behaviour |
 |---|---|---|
-| `hook_session_limits.py` | SessionStart | Inyecta como contexto los límites de Claude Code (20 subagentes concurrentes, 3 niveles, workflows 16 por defecto / 1–256 / 1,000 por corrida / 4,096 ítems / aviso sobre 25 agentes o 1.5M tokens, caché de prompt compartida) y la lista de comandos `/mas-architect:*` y `/mas-panel` |
-| `hook_guard_secrets.py` | PreToolUse `Write\|Edit\|MultiEdit\|NotebookEdit` | Niega escrituras con llaves/tokens (regex); nunca muestra el valor |
-| `hook_spawn_contract.py` | PreToolUse `Agent\|Task` | Avisa si la delegación no tiene criterio de terminado; `MAS_ARCHITECT_SPAWN_CONTRACT=strict` la niega, `=off` la desactiva |
-| `hook_lint_spec.py` | PostToolUse `Write\|Edit\|MultiEdit` | Lintea `*.mas.json`; errores bloquean; escribe `.mas/last-report.json` (si no puede escribirlo, avisa en stderr y emite la decisión igual) |
-| `hook_validate_definitions.py` | PostToolUse `Write\|Edit\|MultiEdit` | Lintea agentes y skills con las reglas DEF |
+| `hook_session_limits.py` | SessionStart | Injects the Claude Code limits as context (20 concurrent subagents, 3 nesting levels, workflows 16 by default / 1–256 / 1,000 per run / 4,096 items / advisory above 25 agents or 1.5M tokens, shared prompt cache) plus the list of `/mas-architect:*` commands and `/mas-panel` |
+| `hook_guard_secrets.py` | PreToolUse `Write\|Edit\|MultiEdit\|NotebookEdit` | Denies writes that contain keys or tokens (regex); never shows the value |
+| `hook_spawn_contract.py` | PreToolUse `Agent\|Task` | Warns when a delegation has no done criterion (English or Spanish phrasing); `MAS_ARCHITECT_SPAWN_CONTRACT=strict` denies it, `=off` disables the check |
+| `hook_lint_spec.py` | PostToolUse `Write\|Edit\|MultiEdit` | Lints `*.mas.json`; errors block; writes `.mas/last-report.json` (if the report cannot be saved it says so on stderr and still emits the decision) |
+| `hook_validate_definitions.py` | PostToolUse `Write\|Edit\|MultiEdit` | Lints agent and skill files with the DEF rules |
