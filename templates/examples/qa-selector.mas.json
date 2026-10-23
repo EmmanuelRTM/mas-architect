@@ -1,0 +1,113 @@
+{
+  "$schema": "../spec.schema.json",
+  "name": "verifiable-qa-pool",
+  "version": "1",
+  "task": {
+    "shape": "short_verifiable",
+    "description": "Short answers with a checkable ground truth (math, QA, multiple choice)."
+  },
+  "platform": {
+    "runtime": "claude-code-workflow",
+    "max_concurrency": 8,
+    "nesting_depth": 1
+  },
+  "baseline": {
+    "single_agent_score": 0.343,
+    "metric": "exact match",
+    "runs": 3
+  },
+  "agents": [
+    {
+      "id": "solver-claude",
+      "role": "worker",
+      "count": 3,
+      "model": "claude-sonnet-5-5",
+      "model_family": "claude",
+      "context": "isolated",
+      "stateful": false,
+      "effort": "medium"
+    },
+    {
+      "id": "solver-openai",
+      "role": "worker",
+      "count": 3,
+      "model": "gpt-5.5",
+      "model_family": "openai",
+      "context": "isolated",
+      "stateful": false
+    },
+    {
+      "id": "solver-qwen",
+      "role": "worker",
+      "count": 2,
+      "model": "qwen3.6-27b",
+      "model_family": "qwen",
+      "context": "isolated",
+      "stateful": false
+    },
+    {
+      "id": "selector",
+      "role": "selector",
+      "model": "claude-haiku-5-5",
+      "model_family": "claude",
+      "context": "isolated",
+      "stateful": false,
+      "memoryless": true,
+      "effort": "medium"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "solve",
+      "owner": "solver-claude",
+      "start_condition": "item received",
+      "done_criterion": "answer plus retrieved evidence returned"
+    },
+    {
+      "id": "solve-alt",
+      "owner": "solver-openai",
+      "start_condition": "item received",
+      "done_criterion": "answer plus retrieved evidence returned"
+    },
+    {
+      "id": "solve-qwen",
+      "owner": "solver-qwen",
+      "start_condition": "item received",
+      "done_criterion": "answer plus retrieved evidence returned"
+    },
+    {
+      "id": "select",
+      "owner": "selector",
+      "start_condition": "all candidates in",
+      "done_criterion": "one answer chosen, survives order-swap bias injection"
+    }
+  ],
+  "communication": {
+    "mode": "none",
+    "share_full_solutions": false
+  },
+  "selection": {
+    "strategy": "bias_controlled",
+    "candidates": 8,
+    "revision_peers": 1
+  },
+  "merge": {
+    "input": "raw_evidence",
+    "agent": "selector"
+  },
+  "verification": {
+    "judge_agents": [
+      "selector"
+    ]
+  },
+  "state": {
+    "location": "harness"
+  },
+  "monitoring": {
+    "repeated_runs": 3,
+    "track_cost": true
+  },
+  "budget": {
+    "expected_error_correlation": 0.3
+  }
+}

@@ -1,0 +1,116 @@
+{
+  "$schema": "../spec.schema.json",
+  "name": "codebase-qa-team",
+  "version": "1",
+  "task": {
+    "shape": "codebase_long",
+    "description": "Answer architecture questions that cut across a large codebase."
+  },
+  "platform": {
+    "runtime": "claude-code-subagents",
+    "max_concurrency": 4,
+    "nesting_depth": 1
+  },
+  "baseline": {
+    "single_agent_score": 0.323,
+    "metric": "rubric accuracy",
+    "runs": 3
+  },
+  "planning": {
+    "joint_exploration": true,
+    "negotiated_partition": true
+  },
+  "agents": [
+    {
+      "id": "explorer",
+      "role": "worker",
+      "count": 3,
+      "model": "claude-opus-5-5",
+      "model_family": "claude",
+      "context": "isolated",
+      "stateful": false,
+      "heartbeat_seconds": 90,
+      "effort": "medium",
+      "max_tokens": 128000
+    },
+    {
+      "id": "explorer-alt",
+      "role": "worker",
+      "count": 1,
+      "model": "deepseek-v4-pro",
+      "model_family": "deepseek",
+      "context": "isolated",
+      "stateful": false,
+      "heartbeat_seconds": 90
+    },
+    {
+      "id": "answer-reviewer",
+      "role": "critic",
+      "model": "claude-opus-5-5",
+      "model_family": "claude",
+      "context": "isolated",
+      "stateful": false,
+      "memoryless": true,
+      "effort": "high",
+      "max_tokens": 128000
+    }
+  ],
+  "tasks": [
+    {
+      "id": "explore",
+      "owner": "explorer",
+      "start_condition": "question received",
+      "done_criterion": "shared map of relevant modules posted to thread"
+    },
+    {
+      "id": "partition",
+      "owner": "explorer-alt",
+      "start_condition": "shared map exists",
+      "done_criterion": "each sub-question has one named owner"
+    },
+    {
+      "id": "review",
+      "owner": "answer-reviewer",
+      "start_condition": "draft answer ready",
+      "done_criterion": "every claim traced to a file and line"
+    }
+  ],
+  "communication": {
+    "mode": "passive",
+    "share_full_solutions": false,
+    "memory": {
+      "type": "claim_ledger",
+      "claim_states": [
+        "proposed",
+        "confirmed",
+        "contested",
+        "superseded"
+      ]
+    }
+  },
+  "selection": {
+    "strategy": "evidence_grounded",
+    "candidates": 4,
+    "revision_peers": 1
+  },
+  "merge": {
+    "input": "snippets",
+    "agent": "answer-reviewer"
+  },
+  "verification": {
+    "judge_agents": [
+      "answer-reviewer"
+    ]
+  },
+  "state": {
+    "location": "harness"
+  },
+  "monitoring": {
+    "repeated_runs": 3,
+    "heartbeat": true,
+    "track_cost": true
+  },
+  "budget": {
+    "expected_error_correlation": 0.5
+  }
+}

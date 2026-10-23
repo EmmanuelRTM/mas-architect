@@ -1,0 +1,76 @@
+{
+  "$schema": "../spec.schema.json",
+  "name": "agent-catalog-router",
+  "version": "1",
+  "task": {
+    "shape": "routing",
+    "description": "Route each request to the right agent among thousands of agent cards."
+  },
+  "platform": {
+    "runtime": "custom",
+    "max_concurrency": 32
+  },
+  "baseline": {
+    "single_agent_score": 0.81,
+    "metric": "routing accuracy",
+    "runs": 3
+  },
+  "agents": [
+    {
+      "id": "router",
+      "role": "router",
+      "model": "claude-haiku-5-5",
+      "model_family": "claude",
+      "context": "isolated",
+      "stateful": false,
+      "effort": "low"
+    },
+    {
+      "id": "route-auditor",
+      "role": "verifier",
+      "model": "gpt-5.5",
+      "model_family": "openai",
+      "context": "isolated",
+      "stateful": false,
+      "memoryless": true
+    }
+  ],
+  "tasks": [
+    {
+      "id": "route",
+      "owner": "router",
+      "start_condition": "request arrives with top-K preselected cards",
+      "done_criterion": "one agent card chosen with a reason"
+    },
+    {
+      "id": "audit",
+      "owner": "route-auditor",
+      "start_condition": "sampled 5% of routed requests",
+      "done_criterion": "misroutes logged with the card that should have won"
+    }
+  ],
+  "communication": {
+    "mode": "none",
+    "share_full_solutions": false
+  },
+  "routing": {
+    "catalog_size": 5000,
+    "top_k": 20,
+    "preselection": "bm25"
+  },
+  "verification": {
+    "judge_agents": [
+      "route-auditor"
+    ]
+  },
+  "state": {
+    "location": "harness"
+  },
+  "monitoring": {
+    "repeated_runs": 3,
+    "track_cost": true
+  },
+  "budget": {
+    "expected_error_correlation": 0.5
+  }
+}

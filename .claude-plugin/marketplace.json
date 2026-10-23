@@ -1,0 +1,14 @@
+{
+  "name": "mas-architect",
+  "owner": {
+    "name": "EmmanuelRTM"
+  },
+  "plugins": [
+    {
+      "name": "mas-architect",
+      "source": "./",
+      "description": "Assistant for designing multi-agent systems grounded in 2026 research and Claude model guidance."
+    }
+  ],
+  "description": "Evidence-based assistant for designing, linting and monitoring multi-agent systems."
+}

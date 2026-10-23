@@ -1,0 +1,23 @@
+{
+  "name": "mas-architect",
+  "version": "0.1.0",
+  "description": "Design, lint and monitor multi-agent systems: evidence-based skills, reviewer agents, deterministic regex/rule hooks, model+effort planning per role and a live control panel.",
+  "author": { "name": "EmmanuelRTM", "url": "https://github.com/EmmanuelRTM" },
+  "license": "MIT",
+  "keywords": ["multi-agent", "subagents", "orchestration", "linting", "hooks", "dashboard"],
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "maxConcurrentSubagents": {
+      "type": "number",
+      "title": "Concurrent subagent limit shown in the panel",
+      "description": "Matches CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS (default 20).",
+      "default": 20
+    },
+    "reportPath": {
+      "type": "string",
+      "title": "Lint report the panel reads",
+      "description": "Relative to the session's working directory.",
+      "default": ".mas/last-report.json"
+    }
+  }
+}

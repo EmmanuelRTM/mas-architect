@@ -1,0 +1,124 @@
+{
+  "$schema": "../spec.schema.json",
+  "name": "kernel-optimization-swarm",
+  "version": "1",
+  "task": {
+    "shape": "optimization",
+    "description": "Optimize a kernel against an executable cycle-count score."
+  },
+  "platform": {
+    "runtime": "claude-code-workflow",
+    "max_concurrency": 15,
+    "nesting_depth": 1
+  },
+  "baseline": {
+    "single_agent_score": 1336,
+    "metric": "cycles (lower is better)",
+    "runs": 3
+  },
+  "agents": [
+    {
+      "id": "advisor",
+      "role": "advisor",
+      "model": "claude-opus-5-5",
+      "model_family": "claude",
+      "context": "isolated",
+      "stateful": false,
+      "effort": "medium"
+    },
+    {
+      "id": "worker",
+      "role": "worker",
+      "count": 3,
+      "model": "claude-sonnet-5-5",
+      "model_family": "claude",
+      "context": "isolated",
+      "stateful": false,
+      "heartbeat_seconds": 120,
+      "effort": "high",
+      "max_tokens": 128000
+    },
+    {
+      "id": "worker-alt",
+      "role": "worker",
+      "count": 2,
+      "model": "gpt-5.5",
+      "model_family": "openai",
+      "context": "isolated",
+      "stateful": false,
+      "heartbeat_seconds": 120
+    },
+    {
+      "id": "evaluator",
+      "role": "verifier",
+      "model": "deterministic",
+      "model_family": "none",
+      "context": "isolated",
+      "stateful": false,
+      "memoryless": true
+    }
+  ],
+  "tasks": [
+    {
+      "id": "assign",
+      "owner": "advisor",
+      "start_condition": "epoch starts with harness evidence summary",
+      "done_criterion": "one concrete, non-overlapping experiment per worker"
+    },
+    {
+      "id": "experiment",
+      "owner": "worker",
+      "start_condition": "assignment received",
+      "done_criterion": "candidate submitted to evaluator or abandoned with reason"
+    },
+    {
+      "id": "experiment-alt",
+      "owner": "worker-alt",
+      "start_condition": "assignment received",
+      "done_criterion": "candidate submitted to evaluator or abandoned with reason"
+    },
+    {
+      "id": "score",
+      "owner": "evaluator",
+      "start_condition": "candidate submitted",
+      "done_criterion": "score recorded in harness ledger"
+    }
+  ],
+  "communication": {
+    "mode": "none",
+    "share_full_solutions": false
+  },
+  "selection": {
+    "strategy": "best_of_n_metric",
+    "candidates": 5
+  },
+  "verification": {
+    "judge_agents": [
+      "evaluator"
+    ],
+    "evaluator_protected": true,
+    "real_validation_before_promotion": true,
+    "held_out_audit_every": 10
+  },
+  "state": {
+    "location": "harness",
+    "reset_policy": {
+      "type": "fork_and_flush",
+      "checkpoints": [
+        0,
+        0.33,
+        0.66
+      ],
+      "branches": 4
+    }
+  },
+  "monitoring": {
+    "repeated_runs": 3,
+    "heartbeat": true,
+    "track_cost": true
+  },
+  "budget": {
+    "max_tokens": 1000000000,
+    "expected_error_correlation": 0.4
+  }
+}

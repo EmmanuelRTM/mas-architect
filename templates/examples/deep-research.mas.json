@@ -1,0 +1,155 @@
+{
+  "$schema": "../spec.schema.json",
+  "name": "deep-research-report",
+  "version": "1",
+  "task": {
+    "shape": "cited_report",
+    "description": "Long-form research report where every claim carries a citation."
+  },
+  "platform": {
+    "runtime": "claude-code-workflow",
+    "max_concurrency": 8,
+    "nesting_depth": 1
+  },
+  "baseline": {
+    "single_agent_score": 48.7,
+    "metric": "DRB-II",
+    "runs": 3
+  },
+  "planning": {
+    "fixed_spec": true,
+    "planner_ensemble": 3,
+    "joint_exploration": false
+  },
+  "agents": [
+    {
+      "id": "planner",
+      "role": "planner",
+      "count": 3,
+      "model": "claude-opus-5-5",
+      "model_family": "claude",
+      "context": "isolated",
+      "stateful": false,
+      "effort": "high",
+      "max_tokens": 128000
+    },
+    {
+      "id": "spec-judge",
+      "role": "judge",
+      "model": "gpt-5.5",
+      "model_family": "openai",
+      "context": "isolated",
+      "stateful": false,
+      "memoryless": true
+    },
+    {
+      "id": "section-researcher",
+      "role": "researcher",
+      "count": 6,
+      "model": "claude-sonnet-5-5",
+      "model_family": "claude",
+      "context": "isolated",
+      "stateful": false,
+      "heartbeat_seconds": 60,
+      "effort": "high",
+      "max_tokens": 128000
+    },
+    {
+      "id": "global-editor",
+      "role": "editor",
+      "model": "claude-opus-5-5",
+      "model_family": "claude",
+      "context": "isolated",
+      "stateful": false,
+      "effort": "medium",
+      "max_tokens": 128000
+    },
+    {
+      "id": "citation-verifier",
+      "role": "verifier",
+      "model": "gemini-3.1-pro",
+      "model_family": "google",
+      "context": "isolated",
+      "stateful": false,
+      "memoryless": true
+    }
+  ],
+  "tasks": [
+    {
+      "id": "plan",
+      "owner": "planner",
+      "start_condition": "brief received",
+      "done_criterion": "three candidate outlines written to spec/"
+    },
+    {
+      "id": "fix-spec",
+      "owner": "spec-judge",
+      "start_condition": "three outlines exist",
+      "done_criterion": "ResearchSpec frozen with one section per researcher"
+    },
+    {
+      "id": "research-sections",
+      "owner": "section-researcher",
+      "start_condition": "ResearchSpec frozen",
+      "done_criterion": "each section written with inline citations and raw snippets"
+    },
+    {
+      "id": "edit",
+      "owner": "global-editor",
+      "start_condition": "all sections done",
+      "done_criterion": "report coherent; local edits only inside owning sections"
+    },
+    {
+      "id": "verify",
+      "owner": "citation-verifier",
+      "start_condition": "edited draft exists",
+      "done_criterion": "every claim premise checked against its snippet"
+    }
+  ],
+  "communication": {
+    "mode": "non_blocking",
+    "share_full_solutions": false,
+    "memory": {
+      "type": "claim_ledger",
+      "claim_states": [
+        "proposed",
+        "confirmed",
+        "contested",
+        "superseded"
+      ]
+    }
+  },
+  "selection": {
+    "strategy": "bias_controlled",
+    "candidates": 3,
+    "revision_peers": 1
+  },
+  "merge": {
+    "input": "raw_evidence",
+    "agent": "global-editor"
+  },
+  "verification": {
+    "judge_agents": [
+      "citation-verifier",
+      "spec-judge"
+    ],
+    "real_validation_before_promotion": true
+  },
+  "state": {
+    "location": "harness",
+    "reset_policy": {
+      "type": "stateless_epochs"
+    }
+  },
+  "monitoring": {
+    "repeated_runs": 3,
+    "belief_probes": false,
+    "heartbeat": true,
+    "track_cost": true
+  },
+  "budget": {
+    "max_tokens": 1048576,
+    "max_model_calls": 600,
+    "expected_error_correlation": 0.5
+  }
+}
