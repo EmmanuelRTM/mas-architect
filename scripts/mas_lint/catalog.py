@@ -21,8 +21,10 @@ class ClaudeModel:
     alias: str
     tier: int  # relative capability tier, 1 = lightest
     default_effort: str
-    # thinking mode -> effort levels at which the API accepts it
+    # thinking mode -> effort levels at which the guide documents the API accepts it
     thinking_allowed: dict[str, frozenset[str]] = field(default_factory=dict)
+    # thinking mode -> effort levels at which the guide documents a 400 rejection
+    thinking_rejected: dict[str, frozenset[str]] = field(default_factory=dict)
     strengths: tuple[str, ...] = ()
     cautions: tuple[str, ...] = ()
     guide: str = ""
@@ -32,6 +34,7 @@ class ClaudeModel:
 
 _ALL = frozenset(EFFORT_LEVELS)
 _UP_TO_HIGH = frozenset({"low", "medium", "high"})
+_ABOVE_HIGH = frozenset({"xhigh", "max"})
 
 CATALOG: dict[str, ClaudeModel] = {
     m.id: m
@@ -61,10 +64,11 @@ CATALOG: dict[str, ClaudeModel] = {
             tier=3,
             default_effort="medium",
             thinking_allowed={"adaptive": _ALL},
+            thinking_rejected={"disabled": _ALL},
             strengths=(
                 "agentic coding across large repositories",
-                "code review with few false alarms",
-                "knowledge work with accurate figures and citations",
+                "code review: more bugs caught and fewer false alarms than Opus 5 (guide)",
+                "knowledge work: much less likely to state an incorrect figure or cite the wrong source (guide)",
                 "uses elapsed-time budgets to parallelize agent teams",
             ),
             cautions=(
@@ -80,9 +84,11 @@ CATALOG: dict[str, ClaudeModel] = {
             tier=2,
             default_effort="high",
             thinking_allowed={"adaptive": _ALL, "between_tools": _UP_TO_HIGH},
+            thinking_rejected={"between_tools": _ABOVE_HIGH},
             strengths=(
                 "well-specified agentic coding and tool use at medium effort",
                 "balanced cost and quality for parallel workers",
+                "researched work once told to gather current sources instead of answering from training knowledge (guide)",
             ),
             cautions=(
                 "at low effort can skip verifying a change",
@@ -98,6 +104,7 @@ CATALOG: dict[str, ClaudeModel] = {
             tier=1,
             default_effort="medium",
             thinking_allowed={"adaptive": _ALL, "disabled": _UP_TO_HIGH},
+            thinking_rejected={"disabled": _ABOVE_HIGH},
             strengths=(
                 "cheapest and fastest; chat, routing and high-volume short tasks",
                 "cheap selectors and classifiers",

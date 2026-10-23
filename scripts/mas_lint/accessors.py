@@ -15,6 +15,23 @@ SHAPES = (
 )
 LONG_RUNNING_SHAPES = frozenset({"optimization", "codebase_long", "cited_report", "expensive_eval", "judgment_science"})
 
+ROLES = (
+    "planner",
+    "worker",
+    "researcher",
+    "solver",
+    "orchestrator",
+    "advisor",
+    "manager",
+    "judge",
+    "verifier",
+    "critic",
+    "selector",
+    "reviewer",
+    "editor",
+    "router",
+    "evaluator",
+)
 GENERATOR_ROLES = frozenset({"worker", "researcher", "planner", "solver"})
 COORDINATOR_ROLES = frozenset({"orchestrator", "advisor", "manager"})
 JUDGE_ROLES = frozenset({"judge", "verifier", "critic", "selector", "reviewer", "evaluator"})
@@ -63,6 +80,16 @@ def total_instances(spec: dict) -> int:
 def tasks(spec: dict) -> list[dict]:
     value = spec.get("tasks")
     return [t for t in value if isinstance(t, dict)] if isinstance(value, list) else []
+
+
+def task_path(task: dict, field: str = "") -> str:
+    base = f"tasks.{task.get('id', '?')}"
+    return f"{base}.{field}" if field else base
+
+
+def agent_tools(agent: dict) -> list[str]:
+    value = agent.get("tools")
+    return [t for t in value if isinstance(t, str)] if isinstance(value, list) else []
 
 
 def shape(spec: dict) -> str | None:

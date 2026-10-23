@@ -3,7 +3,7 @@
 
     python3 mas_lint_cli.py lint SPEC [--format text|json] [--no-info]
     python3 mas_lint_cli.py recommend SPEC
-    python3 mas_lint_cli.py rules
+    python3 mas_lint_cli.py rules [--markdown]
     python3 mas_lint_cli.py neff N RHO
 
 Exit codes: 0 ok, 1 lint errors, 2 bad input.
@@ -16,6 +16,7 @@ import json
 import sys
 
 from mas_lint import SpecLoadError, lint, load_spec
+from mas_lint.definitions import DEFINITION_RULES
 from mas_lint.formatting import format_text
 from mas_lint.metrics import effective_team_size, saturation_size
 from mas_lint.rules import registered
@@ -41,10 +42,23 @@ def cmd_recommend(args) -> int:
     return 0
 
 
-def cmd_rules(_args) -> int:
+def cmd_rules(args) -> int:
+    if args.markdown:
+        print(rules_markdown())
+        return 0
     for rule in registered():
         print(f"{rule.id}  {rule.practice:4} {rule.title}")
     return 0
+
+
+def rules_markdown() -> str:
+    """The two tables of docs/RULES.md, so the doc can be regenerated from the code."""
+    cell = lambda text: " ".join(str(text).split()).replace("|", "\\|")  # noqa: E731
+    lines = ["## Reglas de spec (`*.mas.json`)", "", "| Regla | Práctica | Qué verifica | Evidencia |", "|---|---|---|---|"]
+    lines += [f"| {r.id} | {r.practice} | {cell(r.title)} | {cell(r.evidence)} |" for r in registered()]
+    lines += ["", "## Reglas de definiciones (`agents/*.md`, `skills/*/SKILL.md`)", "", "| Regla | Severidad | Qué verifica |", "|---|---|---|"]
+    lines += [f"| {rid} | {severity} | {what} |" for rid, severity, what in DEFINITION_RULES]
+    return "\n".join(lines)
 
 
 def cmd_neff(args) -> int:
@@ -64,7 +78,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_rec = sub.add_parser("recommend", help="model and effort per agent vs the role table")
     p_rec.add_argument("spec")
     p_rec.set_defaults(func=cmd_recommend)
-    sub.add_parser("rules", help="list every rule").set_defaults(func=cmd_rules)
+    p_rules = sub.add_parser("rules", help="list every rule")
+    p_rules.add_argument("--markdown", action="store_true", help="print the docs/RULES.md tables")
+    p_rules.set_defaults(func=cmd_rules)
     p_neff = sub.add_parser("neff", help="effective team size for N agents at error correlation RHO")
     p_neff.add_argument("n", type=int)
     p_neff.add_argument("rho", type=float)

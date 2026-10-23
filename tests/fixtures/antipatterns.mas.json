@@ -1,22 +1,27 @@
 {
   "name": "everything-wrong",
-  "task": { "shape": "cited_report" },
-  "platform": { "runtime": "claude-code-subagents", "max_concurrency": 40, "nesting_depth": 4 },
+  "task": { "shape": "optimization" },
+  "platform": { "runtime": "claude-code-subagents", "max_concurrency": 40, "nesting_depth": 4, "shared_resources": true, "max_items": 5000 },
   "agents": [
     { "id": "manager", "role": "orchestrator", "model": "claude-opus-5-5", "model_family": "claude", "stateful": true, "context": "shared" },
     { "id": "writer", "role": "researcher", "count": 30, "model": "claude-opus-5-5", "model_family": "claude", "context": "shared", "stateful": true },
-    { "id": "manager", "role": "worker", "model": "claude-opus-5-5", "model_family": "claude" }
+    { "id": "manager", "role": "worker", "model": "claude-opus-5-5", "model_family": "claude" },
+    { "id": "wizard", "role": "wizard", "count": 0, "model": "claude-opus-5-5", "model_family": "claude",
+      "tools": ["t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9", "t10", "t11", "t12", "t13"] },
+    { "id": "nitpicker", "role": "critic", "model": "claude-opus-5-5", "model_family": "claude", "memoryless": true }
   ],
   "tasks": [
-    { "id": "write", "owner": "ghost" },
-    { "id": "merge" }
+    { "id": "write", "owner": "ghost", "monitor": "nobody" },
+    { "id": "merge" },
+    { "id": "critique", "owner": "nitpicker", "start_condition": "always", "done_criterion": "done" }
   ],
-  "communication": { "mode": "blocking", "share_full_solutions": true, "debate": true },
+  "communication": { "mode": "blocking", "share_full_solutions": true, "debate": true, "ranking": "popularity" },
+  "context_policy": { "stale_output": "summarize" },
   "selection": { "strategy": "majority_vote", "candidates": 30, "revision_peers": 29 },
   "merge": { "input": "summaries", "agent": "manager" },
   "verification": { "judge_agents": ["writer"] },
-  "routing": { "catalog_size": 5000 },
-  "state": { "location": "orchestrator_context" },
+  "routing": { "catalog_size": 5000, "preselection": "none" },
+  "state": { "location": "orchestrator_context", "reset_policy": { "type": "fork_and_flush" } },
   "monitoring": { "repeated_runs": 1 },
   "training": { "credit_assignment": "per_response" },
   "budget": { "expected_error_correlation": 0.9 }

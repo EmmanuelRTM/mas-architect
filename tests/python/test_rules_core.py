@@ -58,3 +58,42 @@ def test_mas019_flags_hardcoded_secret_without_echoing_it(make_spec):
     hits = [f for f in report.findings if f.rule_id == "MAS019"]
     assert hits and hits[0].severity.value == "error"
     assert fake not in hits[0].message
+
+
+def test_mas000_unknown_role_is_error(make_spec):
+    from mas_lint import lint
+
+    spec = make_spec()
+    spec["agents"][0]["role"] = "wizard"
+    assert any(f.rule_id == "MAS000" and f.severity.value == "error" and "role" in f.message for f in lint(spec).findings)
+
+
+def test_mas000_count_below_one_is_error(make_spec, rule_ids):
+    spec = make_spec()
+    spec["agents"][0]["count"] = 0
+    assert "MAS000" in rule_ids(spec)
+
+
+def test_mas001_near_ceiling_baseline_warns(make_spec):
+    from mas_lint import lint
+
+    spec = make_spec(baseline={"single_agent_score": 0.9, "max_score": 1.0, "runs": 3})
+    hits = [f for f in lint(spec).findings if f.rule_id == "MAS001"]
+    assert [f.severity.value for f in hits] == ["warning"]
+    assert "ceiling" in hits[0].message
+
+
+def test_mas001_far_from_ceiling_passes(make_spec, rule_ids):
+    spec = make_spec(baseline={"single_agent_score": 0.5, "max_score": 1.0, "runs": 3})
+    assert "MAS001" not in rule_ids(spec)
+
+
+def test_mas001_fewer_than_three_runs_warns(make_spec):
+    from mas_lint import lint
+
+    for baseline in ({"single_agent_score": 0.3, "runs": 1}, {"single_agent_score": 0.3}):
+        spec = make_spec()
+        spec["baseline"] = baseline
+        hits = [f for f in lint(spec).findings if f.rule_id == "MAS001"]
+        assert [f.severity.value for f in hits] == ["warning"], baseline
+        assert "runs" in hits[0].message

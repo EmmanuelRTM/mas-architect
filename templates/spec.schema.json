@@ -38,6 +38,21 @@
         },
         "description": {
           "type": "string"
+        },
+        "closure_criteria": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "What closure means for this task: controls, validation, delivery/feasibility, repeat-run success."
+        },
+        "parallelism": {
+          "enum": [
+            "replica",
+            "structural",
+            "both"
+          ],
+          "description": "replica = several complete solution paths; structural = concurrent parts of one path (TIPEX 2608.05791)."
         }
       }
     },
@@ -61,6 +76,15 @@
         },
         "concurrency_override": {
           "type": "boolean"
+        },
+        "shared_resources": {
+          "type": "boolean",
+          "description": "Several agents share one execution machine or account (SCARCE 2610.21029)."
+        },
+        "max_items": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Items in a single parallel() or pipeline() call; workflows allow at most 4,096."
         }
       }
     },
@@ -74,7 +98,12 @@
           "type": "string"
         },
         "runs": {
-          "type": "integer"
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_score": {
+          "type": "number",
+          "description": "Ceiling of the metric, to judge how close the single agent already is."
         }
       }
     },
@@ -219,7 +248,8 @@
             "type": "array",
             "items": {
               "type": "string"
-            }
+            },
+            "description": "Tools granted to this agent. Keep the list short: unused tool descriptions are billed every turn."
           },
           "instructions": {
             "type": "string"
@@ -258,6 +288,10 @@
           },
           "done_criterion": {
             "type": "string"
+          },
+          "monitor": {
+            "type": "string",
+            "description": "Agent id or \"harness\": the delegator that monitors progress and recovers the task (RCM 2610.21243)."
           }
         }
       }
@@ -285,15 +319,57 @@
           "type": "object",
           "properties": {
             "type": {
-              "type": "string"
+              "enum": [
+                "claim_ledger",
+                "bulletin_board",
+                "shared_workspace",
+                "none"
+              ]
             },
             "claim_states": {
               "type": "array",
               "items": {
-                "type": "string"
+                "enum": [
+                  "proposed",
+                  "confirmed",
+                  "contested",
+                  "superseded"
+                ]
               }
             }
           }
+        },
+        "gated_isolation": {
+          "type": "boolean",
+          "description": "Selected search tasks stay isolated from the shared board so they keep their own priors (ArcticSwarm)."
+        },
+        "ranking": {
+          "enum": [
+            "none",
+            "popularity",
+            "citation"
+          ],
+          "description": "How shared findings are ordered for readers; popularity ranking herds (2610.30769)."
+        }
+      }
+    },
+    "context_policy": {
+      "type": "object",
+      "description": "How each agent's context is bounded over a run (AKV 2610.28577, TokenEconomizer).",
+      "properties": {
+        "retained_tool_responses": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "prune_unused_tools": {
+          "type": "boolean"
+        },
+        "stale_output": {
+          "enum": [
+            "drop",
+            "keep",
+            "summarize"
+          ]
         }
       }
     },
@@ -319,6 +395,10 @@
         "revision_peers": {
           "type": "integer",
           "minimum": 0
+        },
+        "dedup": {
+          "type": "boolean",
+          "description": "Near-duplicate candidates are dropped before selection (DAPS)."
         }
       }
     },
@@ -335,6 +415,10 @@
         },
         "agent": {
           "type": "string"
+        },
+        "recall_tool": {
+          "type": "boolean",
+          "description": "The merger can pull snippets from a dependency's full transcript on demand (DAGent 2609.39154)."
         }
       }
     },
@@ -375,6 +459,7 @@
                 "fork_and_flush",
                 "session_split",
                 "stateless_epochs",
+                "prune_schedule",
                 "none"
               ]
             },
@@ -385,7 +470,24 @@
               }
             },
             "branches": {
-              "type": "integer"
+              "type": "integer",
+              "minimum": 2
+            },
+            "sessions": {
+              "type": "integer",
+              "minimum": 2
+            },
+            "inflection_tokens": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "schedule": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "description": "Start-many-then-prune counts, strictly decreasing to 1, e.g. [12, 5, 2, 1]."
             }
           }
         }
@@ -398,10 +500,16 @@
           "type": "integer"
         },
         "top_k": {
-          "type": "integer"
+          "type": "integer",
+          "minimum": 1
         },
         "preselection": {
-          "type": "string"
+          "enum": [
+            "bm25",
+            "index",
+            "embedding",
+            "none"
+          ]
         }
       }
     },
@@ -419,6 +527,21 @@
         },
         "track_cost": {
           "type": "boolean"
+        },
+        "commitment_log": {
+          "type": "boolean",
+          "description": "Every commitment an agent makes to a peer is logged for the principal."
+        },
+        "progress_check": {
+          "enum": [
+            "self_report",
+            "peer_override"
+          ],
+          "description": "Whether a supervisor or peer can override an agent's self-reported status (Agent Status Protocol)."
+        },
+        "critical_path_steps": {
+          "type": "boolean",
+          "description": "Measure progress in critical-path steps, not total steps (Kimi K2.5 PARL)."
         }
       }
     },
@@ -457,6 +580,10 @@
           "type": "number",
           "minimum": 0,
           "maximum": 1
+        },
+        "expected_tokens_per_instance": {
+          "type": "integer",
+          "minimum": 1
         }
       }
     }

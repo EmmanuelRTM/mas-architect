@@ -158,3 +158,29 @@ def test_report_lists_model_plan_per_agent(base_spec):
     assert selector["model"] == "claude-haiku-5-5"
     assert selector["effort"] == "medium"
     assert selector["recommended"] == {"model": "claude-haiku-5-5", "effort": "medium"}
+
+
+def test_mas023_single_agent_at_xhigh_is_info(make_spec):
+    spec = make_spec()
+    spec["agents"][0]["count"] = 1
+    spec["agents"][0]["effort"] = "xhigh"
+    assert _severities(spec, "MAS023") == {"info"}
+
+
+def test_mas025_undocumented_combination_is_warning(make_spec):
+    spec = make_spec()
+    spec["agents"][0].update(model="claude-fable-5-1", thinking="between_tools")
+    hits = _findings(spec, "MAS025")
+    assert {f.severity.value for f in hits} == {"warning"}
+    assert "not documented" in hits[0].message
+
+
+def test_mas025_haiku_disabled_above_high_is_error(make_spec):
+    spec = make_spec()
+    spec["agents"][-1].update(thinking="disabled", effort="xhigh", effort_justification="measured")
+    assert "error" in _severities(spec, "MAS025")
+
+
+def test_judge_and_researcher_reasons_cite_their_guides():
+    assert "Opus 5.5" in " ".join(recommend("judge", None).reasons)
+    assert "Sonnet 5.5" in " ".join(recommend("researcher", "cited_report").reasons)

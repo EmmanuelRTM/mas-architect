@@ -1,6 +1,6 @@
 {
   "name": "mas-architect",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Design, lint and monitor multi-agent systems: evidence-based skills, reviewer agents, deterministic regex/rule hooks, model+effort planning per role and a live control panel.",
   "author": {
     "name": "EmmanuelRTM",
@@ -22,14 +22,38 @@
     "maxConcurrentSubagents": {
       "type": "number",
       "title": "Concurrent subagent limit shown in the panel",
-      "description": "Matches CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS (default 20).",
+      "description": "Read from CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS when unset here (default 20).",
       "default": 20
     },
     "reportPath": {
       "type": "string",
       "title": "Lint report the panel reads",
-      "description": "Relative to the session's working directory.",
+      "description": "Relative to the session's working directory; when unset, MAS_ARCHITECT_REPORT_DIR/last-report.json if that variable is set.",
       "default": ".mas/last-report.json"
+    },
+    "staleAfterSeconds": {
+      "type": "number",
+      "title": "Seconds of silence before a running agent reads as stalled",
+      "description": "A running agent with no turn or tool event for this long is flagged 'stalled?' (alive but not progressing).",
+      "default": 120
+    },
+    "maxNestingDepth": {
+      "type": "number",
+      "title": "Subagent nesting depth limit",
+      "description": "Claude Code allows 3 levels; the panel colours the depth row red at or over this value.",
+      "default": 3
+    },
+    "maxConcurrentWorkflowAgents": {
+      "type": "number",
+      "title": "Concurrent workflow agent limit",
+      "description": "The second concurrency bar, for agents a Workflow script starts (default maxConcurrency 16).",
+      "default": 16
+    },
+    "refreshSeconds": {
+      "type": "number",
+      "title": "Panel refresh interval in seconds",
+      "description": "How often the open pane re-reads agents and usage; events refresh it sooner.",
+      "default": 3
     }
   }
 }

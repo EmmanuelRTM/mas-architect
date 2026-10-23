@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import Counter
 
-from ..accessors import SHAPES, agent_ids, agents, get, tasks
+from ..accessors import ROLES, SHAPES, agent_ids, agents, get, tasks
 from .base import Rule, register
 
 
@@ -24,11 +24,19 @@ class SchemaRule(Rule):
         if not team:
             yield self.error("`agents` must list at least one agent.", "agents")
         for index, agent in enumerate(team):
-            if not isinstance(agent.get("id"), str) or not agent.get("role"):
-                yield self.error("every agent needs a string `id` and a `role`.", f"agents[{index}]")
+            yield from self._agent(agent, f"agents[{index}]")
         duplicates = [i for i, n in Counter(a.get("id") for a in team).items() if n > 1 and i]
         for dup in duplicates:
             yield self.error(f"agent id {dup!r} is defined more than once.", f"agents.{dup}")
+
+    def _agent(self, agent, path):
+        if not isinstance(agent.get("id"), str) or not agent.get("role"):
+            yield self.error("every agent needs a string `id` and a `role`.", path)
+        elif agent["role"] not in ROLES:
+            yield self.error(f"agent {agent['id']!r} has role {agent['role']!r}; use one of: {', '.join(ROLES)}.", f"{path}.role")
+        count = agent.get("count")
+        if count is not None and (not isinstance(count, int) or isinstance(count, bool) or count < 1):
+            yield self.error(f"agent {agent.get('id')!r} has count {count!r}; it must be an integer >= 1.", f"{path}.count")
 
 
 @register

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ..accessors import get
+from ..accessors import generator_instances, get
 from .base import Rule, register
 
 VOTING = frozenset({"majority_vote", "plurality", "confidence_vote"})
@@ -17,8 +17,9 @@ class SelectorRule(Rule):
 
     def check(self, spec):
         strategy = get(spec, "selection.strategy")
-        candidates = get(spec, "selection.candidates", 0)
-        if strategy in VOTING and isinstance(candidates, int) and candidates >= 3:
+        candidates = get(spec, "selection.candidates")
+        pool = candidates if isinstance(candidates, int) else generator_instances(spec)
+        if strategy in VOTING and pool >= 3:
             yield self.warning(
                 f"`{strategy}` strands most of the pool's coverage. Use an evidence-grounded selector (score each "
                 "answer by support in documents it retrieved) or a bias-controlled judge (dedupe, normalize style, "

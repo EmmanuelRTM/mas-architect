@@ -4,17 +4,25 @@
   "version": "1",
   "task": {
     "shape": "cited_report",
-    "description": "Long-form research report where every claim carries a citation."
+    "description": "Long-form research report where every claim carries a citation.",
+    "closure_criteria": [
+      "every claim carries a citation whose snippet supports it (verifier score recorded)",
+      "DRB-II score reported over 3 runs, not the best run",
+      "report delivered as a file with the frozen ResearchSpec attached"
+    ],
+    "parallelism": "both"
   },
   "platform": {
     "runtime": "claude-code-workflow",
     "max_concurrency": 8,
-    "nesting_depth": 1
+    "nesting_depth": 1,
+    "max_items": 64
   },
   "baseline": {
     "single_agent_score": 48.7,
     "metric": "DRB-II",
-    "runs": 3
+    "runs": 3,
+    "max_score": 100
   },
   "planning": {
     "fixed_spec": true,
@@ -94,6 +102,12 @@
       "skills": [
         "source-search",
         "citation-format"
+      ],
+      "tools": [
+        "WebSearch",
+        "WebFetch",
+        "Read",
+        "Write"
       ]
     },
     {
@@ -128,31 +142,36 @@
       "id": "plan",
       "owner": "planner",
       "start_condition": "brief received",
-      "done_criterion": "three candidate outlines written to spec/"
+      "done_criterion": "three candidate outlines written to spec/",
+      "monitor": "harness"
     },
     {
       "id": "fix-spec",
       "owner": "spec-judge",
       "start_condition": "three outlines exist",
-      "done_criterion": "ResearchSpec frozen with one section per researcher"
+      "done_criterion": "ResearchSpec frozen as a file with one section per researcher",
+      "monitor": "harness"
     },
     {
       "id": "research-sections",
       "owner": "section-researcher",
       "start_condition": "ResearchSpec frozen",
-      "done_criterion": "each section written with inline citations and raw snippets"
+      "done_criterion": "each section written to its file with inline citations and raw snippets",
+      "monitor": "global-editor"
     },
     {
       "id": "edit",
       "owner": "global-editor",
       "start_condition": "all sections done",
-      "done_criterion": "report coherent; local edits only inside owning sections"
+      "done_criterion": "report file coherent; edits logged and confined to owning sections",
+      "monitor": "harness"
     },
     {
       "id": "verify",
       "owner": "citation-verifier",
       "start_condition": "edited draft exists",
-      "done_criterion": "every claim premise checked against its snippet"
+      "done_criterion": "every claim checked against its snippet; unsupported claims listed in a file",
+      "monitor": "harness"
     }
   ],
   "communication": {
@@ -166,7 +185,14 @@
         "contested",
         "superseded"
       ]
-    }
+    },
+    "gated_isolation": true,
+    "ranking": "none"
+  },
+  "context_policy": {
+    "retained_tool_responses": 12,
+    "prune_unused_tools": true,
+    "stale_output": "drop"
   },
   "selection": {
     "strategy": "bias_controlled",
@@ -175,7 +201,8 @@
   },
   "merge": {
     "input": "raw_evidence",
-    "agent": "global-editor"
+    "agent": "global-editor",
+    "recall_tool": true
   },
   "verification": {
     "judge_agents": [
@@ -194,11 +221,15 @@
     "repeated_runs": 3,
     "belief_probes": false,
     "heartbeat": true,
-    "track_cost": true
+    "track_cost": true,
+    "commitment_log": true,
+    "progress_check": "peer_override",
+    "critical_path_steps": true
   },
   "budget": {
     "max_tokens": 1048576,
     "max_model_calls": 600,
-    "expected_error_correlation": 0.5
+    "expected_error_correlation": 0.5,
+    "expected_tokens_per_instance": 120000
   }
 }

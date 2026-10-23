@@ -33,3 +33,12 @@ def test_text_format_lists_rule_ids(antipattern_path):
     text = format_text(lint(load_spec(antipattern_path)))
     assert "MAS001" in text
     assert "error" in text.lower()
+
+
+def test_report_exposes_monitoring_and_platform(base_spec):
+    data = lint(base_spec).to_dict()
+    assert data["monitoring"] == base_spec["monitoring"]
+    assert data["platform"] == base_spec["platform"]
+    del base_spec["monitoring"], base_spec["platform"]
+    data = lint(base_spec).to_dict()
+    assert data["monitoring"] == {} and data["platform"] == {}

@@ -56,3 +56,31 @@ def test_mas017_over_provisioned_replicas_for_correlation(make_spec, rule_ids):
 
 def test_mas017_reports_effective_size_as_info(make_spec, rule_ids):
     assert "MAS017" in rule_ids(make_spec(), severities=("info",))
+
+
+def test_mas004_voting_falls_back_to_generator_instances(make_spec, rule_ids):
+    spec = make_spec(selection={"strategy": "majority_vote"})
+    del spec["selection"]["candidates"]
+    assert "MAS004" in rule_ids(spec)
+
+
+def test_mas034_debate_on_optimization_warns(make_spec, rule_ids):
+    spec = make_spec(task={"shape": "optimization"}, communication={"mode": "debate"})
+    assert "MAS034" in rule_ids(spec)
+
+
+def test_mas034_revision_peers_on_optimization_warns(make_spec, rule_ids):
+    spec = make_spec(task={"shape": "optimization"}, selection={"revision_peers": 1})
+    assert "MAS034" in rule_ids(spec)
+
+
+def test_mas034_critic_owning_a_task_on_optimization_warns(make_spec, rule_ids):
+    spec = make_spec(task={"shape": "optimization"}, selection={"revision_peers": 0})
+    spec["agents"].append({"id": "nitpicker", "role": "critic", "model": "gpt-5.5", "memoryless": True, "skills": []})
+    spec["tasks"].append({"id": "critique", "owner": "nitpicker", "start_condition": "candidate ready", "done_criterion": "list of issues written to file"})
+    assert "MAS034" in rule_ids(spec)
+
+
+def test_mas034_ignores_other_shapes(make_spec, rule_ids):
+    spec = make_spec(communication={"mode": "debate"}, monitoring={"belief_probes": True})
+    assert "MAS034" not in rule_ids(spec)

@@ -54,3 +54,43 @@ def test_mas018_optimization_needs_reset_policy(make_spec):
 def test_mas018_judgment_science_needs_human(make_spec):
     spec = make_spec(task={"shape": "judgment_science"})
     assert any("human_in_the_loop" in f.message for f in _findings(spec, "MAS018"))
+
+
+def test_mas016_workflow_items_over_4096_is_error(make_spec):
+    spec = make_spec(platform={"runtime": "claude-code-workflow", "max_items": 5000})
+    assert "error" in {f.severity.value for f in _findings(spec, "MAS016")}
+
+
+def test_mas016_workflow_concurrency_over_default_is_info(make_spec):
+    spec = make_spec(platform={"runtime": "claude-code-workflow", "max_concurrency": 20})
+    hits = _findings(spec, "MAS016")
+    assert {f.severity.value for f in hits} == {"info"}
+    assert any("maxConcurrency" in f.message for f in hits)
+
+
+def test_mas016_workflow_token_advisory(make_spec):
+    spec = make_spec(platform={"runtime": "claude-code-workflow"}, budget={"max_tokens": 2_000_000})
+    assert any("1.5" in f.message or "1,500,000" in f.message for f in _findings(spec, "MAS016"))
+
+
+def test_mas016_many_subagents_without_concurrency_warns(make_spec):
+    spec = make_spec(platform={"runtime": "claude-code-subagents"})
+    del spec["platform"]["max_concurrency"]
+    spec["agents"][0]["count"] = 25
+    assert {f.severity.value for f in _findings(spec, "MAS016")} == {"warning"}
+
+
+def test_mas016_missing_runtime_is_info(make_spec):
+    spec = make_spec()
+    del spec["platform"]
+    assert {f.severity.value for f in _findings(spec, "MAS016")} == {"info"}
+
+
+def test_mas018_cited_report_needs_planner_ensemble(make_spec):
+    spec = make_spec(task={"shape": "cited_report"}, planning={"fixed_spec": True, "planner_ensemble": 1})
+    assert any("planner_ensemble" in f.message for f in _findings(spec, "MAS018"))
+
+
+def test_mas018_codebase_long_needs_negotiated_partition(make_spec):
+    spec = make_spec(task={"shape": "codebase_long"}, planning={"joint_exploration": True})
+    assert any("negotiated_partition" in f.message for f in _findings(spec, "MAS018"))

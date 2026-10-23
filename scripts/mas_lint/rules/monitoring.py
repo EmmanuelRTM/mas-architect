@@ -7,6 +7,8 @@ from .base import Rule, register
 
 MIN_RUNS = 3
 TEAM_CREDIT = frozenset({"team", "active_set", "set_level"})
+PEER_CHANNELS = frozenset({"passive", "non_blocking", "broadcast", "debate"})
+HERDING_RANKINGS = frozenset({"popularity", "citation"})
 
 
 @register
@@ -61,3 +63,30 @@ class TeamCreditRule(Rule):
         families = training.get("peer_families")
         if not (isinstance(families, int) and families >= 2) and training.get("decorrelation") is not True:
             yield self.info("Train peers across >= 2 model families (or reward decorrelation) to keep errors independent.", "training")
+
+
+@register
+class CommitmentLogRule(Rule):
+    id = "MAS037"
+    title = "Log commitments; do not rank by popularity"
+    practice = "P9"
+    evidence = (
+        "Agents sharing a machine formed coalitions in up to 79% of rounds and made unsanctioned commitments "
+        "(SCARCE 2610.21029); popularity drifted 9x further from quality than in humans (2610.30769)."
+    )
+
+    def check(self, spec):
+        peers = get(spec, "platform.shared_resources") is True or get(spec, "communication.mode") in PEER_CHANNELS
+        if peers and get(spec, "monitoring.commitment_log") is not True:
+            yield self.warning(
+                "Agents that share a channel or a machine make commitments to each other. Set "
+                "`monitoring.commitment_log: true` so every promise is logged for the principal to sanction or revoke.",
+                "monitoring.commitment_log",
+            )
+        ranking = get(spec, "communication.ranking")
+        if ranking in HERDING_RANKINGS:
+            yield self.info(
+                f"Shared findings ranked by {ranking} herd agents toward early movers, not quality. Rank by evidence "
+                "or show items in a fixed order.",
+                "communication.ranking",
+            )

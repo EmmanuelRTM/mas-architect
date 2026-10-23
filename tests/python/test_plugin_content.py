@@ -10,8 +10,14 @@ from mas_lint.secrets import find_secrets
 
 AGENTS = sorted((ROOT / "agents").glob("*.md"))
 SKILLS = sorted((ROOT / "skills").glob("*/SKILL.md"))
-EXPECTED_SKILLS = {"mas-design", "mas-patterns", "mas-selection-verification", "mas-model-selection", "mas-audit"}
-EXPECTED_AGENTS = {"mas-architect", "mas-critic", "mas-model-planner", "mas-prompt-writer", "mas-system-auditor"}
+EXPECTED_SKILLS = {
+    "mas-design", "mas-patterns", "mas-selection-verification", "mas-model-selection", "mas-audit",
+    "mas-evaluation", "mas-orchestration",
+}
+EXPECTED_AGENTS = {
+    "mas-architect", "mas-critic", "mas-model-planner", "mas-prompt-writer", "mas-system-auditor",
+    "mas-verification-designer", "mas-orchestration-writer",
+}
 
 
 def test_expected_skills_and_agents_exist():

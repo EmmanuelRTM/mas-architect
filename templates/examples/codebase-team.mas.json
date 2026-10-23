@@ -4,7 +4,13 @@
   "version": "1",
   "task": {
     "shape": "codebase_long",
-    "description": "Answer architecture questions that cut across a large codebase."
+    "description": "Answer architecture questions that cut across a large codebase.",
+    "closure_criteria": [
+      "every claim in the answer cites a file and line that exists",
+      "the answer passes the rubric in all 3 repeated runs",
+      "no sub-question is left without a named owner"
+    ],
+    "parallelism": "structural"
   },
   "platform": {
     "runtime": "claude-code-subagents",
@@ -14,7 +20,8 @@
   "baseline": {
     "single_agent_score": 0.323,
     "metric": "rubric accuracy",
-    "runs": 3
+    "runs": 3,
+    "max_score": 1.0
   },
   "planning": {
     "joint_exploration": true,
@@ -46,6 +53,12 @@
       "max_tokens": 128000,
       "skills": [
         "codebase-map"
+      ],
+      "tools": [
+        "Read",
+        "Grep",
+        "Glob",
+        "Bash"
       ]
     },
     {
@@ -59,18 +72,22 @@
       "heartbeat_seconds": 90,
       "skills": [
         "codebase-map"
+      ],
+      "tools": [
+        "Read",
+        "Grep",
+        "Glob",
+        "Bash"
       ]
     },
     {
       "id": "answer-reviewer",
       "role": "critic",
-      "model": "claude-opus-5-5",
-      "model_family": "claude",
+      "model": "gpt-5.5",
+      "model_family": "openai",
       "context": "isolated",
       "stateful": false,
       "memoryless": true,
-      "effort": "high",
-      "max_tokens": 128000,
       "skills": [
         "evidence-trace-rubric"
       ]
@@ -81,19 +98,22 @@
       "id": "explore",
       "owner": "explorer",
       "start_condition": "question received",
-      "done_criterion": "shared map of relevant modules posted to thread"
+      "done_criterion": "shared map of relevant modules written to the claim ledger as a list of file paths",
+      "monitor": "harness"
     },
     {
       "id": "partition",
       "owner": "explorer-alt",
       "start_condition": "shared map exists",
-      "done_criterion": "each sub-question has one named owner"
+      "done_criterion": "each sub-question has one named owner recorded in the ledger",
+      "monitor": "harness"
     },
     {
       "id": "review",
       "owner": "answer-reviewer",
       "start_condition": "draft answer ready",
-      "done_criterion": "every claim traced to a file and line"
+      "done_criterion": "every claim traced to a file and line; untraceable claims listed",
+      "monitor": "harness"
     }
   ],
   "communication": {
@@ -107,7 +127,14 @@
         "contested",
         "superseded"
       ]
-    }
+    },
+    "gated_isolation": true,
+    "ranking": "none"
+  },
+  "context_policy": {
+    "retained_tool_responses": 12,
+    "prune_unused_tools": true,
+    "stale_output": "drop"
   },
   "selection": {
     "strategy": "evidence_grounded",
@@ -129,9 +156,14 @@
   "monitoring": {
     "repeated_runs": 3,
     "heartbeat": true,
-    "track_cost": true
+    "track_cost": true,
+    "commitment_log": true,
+    "progress_check": "peer_override",
+    "critical_path_steps": true
   },
   "budget": {
-    "expected_error_correlation": 0.5
+    "expected_error_correlation": 0.5,
+    "max_tokens": 2000000,
+    "expected_tokens_per_instance": 400000
   }
 }

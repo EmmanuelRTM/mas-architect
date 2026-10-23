@@ -13,18 +13,40 @@ from .reasoning import asks_for_visible_reasoning
 from .secrets import find_secrets
 from .skill_refs import MAX_PRELOADED_SKILLS, is_valid_skill_ref, parse_skill_list, unknown_refs
 
-_AGENT_PATH = re.compile(r"(?:^|/)agents/[^/]+\.md$")
+_AGENT_PATH = re.compile(r"(?:^|/)(?:\.claude/)?agents/[^/]+\.md$")
+_DOCS_SEGMENT = "/docs/"
 _SKILL_PATH = re.compile(r"(?:^|/)skills/([^/]+)/SKILL\.md$")
 _NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 _MODEL_ALIASES = {"sonnet", "opus", "haiku", "fable", "inherit"}
 MAX_DESCRIPTION = 1024
 MAX_SKILL_LINES = 500
 
+# (rule id, severities, what it checks) — the DEF table of docs/RULES.md.
+DEFINITION_RULES: tuple[tuple[str, str, str], ...] = (
+    ("DEF001", "error", "Existe el bloque YAML frontmatter"),
+    ("DEF002", "error", "`name` en kebab-case, ≤ 64 caracteres"),
+    ("DEF003", "error / warning", f"`description` presente (≤ {MAX_DESCRIPTION} caracteres)"),
+    ("DEF004", "warning", "El agente declara `tools` (mínimo privilegio)"),
+    ("DEF005", "warning", "`model` es un alias o id de Claude válido"),
+    ("DEF006", "error", "El cuerpo (system prompt / instrucciones) no está vacío"),
+    ("DEF007", "error", "Sin secretos en el archivo"),
+    ("DEF008", "warning", f"`SKILL.md` ≤ {MAX_SKILL_LINES} líneas"),
+    ("DEF009", "warning", "El nombre del skill coincide con su carpeta"),
+    ("DEF010", "info / error", "`effort` declarado y válido"),
+    ("DEF011", "error / warning", "No pide razonamiento visible en la respuesta (`reasoning_extraction`)"),
+    ("DEF012", "warning", "Cada skill en `skills:` es kebab-case (u `plugin:skill`) y existe junto al agente"),
+    ("DEF013", "warning", "`Skill` no va en `tools`; se usa el campo `skills:`"),
+    ("DEF014", "info / warning", f"El agente declara `skills` (los subagentes no heredan los del padre) y precarga ≤ {MAX_PRELOADED_SKILLS}"),
+)
+
 
 def definition_kind(path: str) -> str | None:
+    """`.claude/agents/<name>.md` or `<plugin-root>/agents/<name>.md` is an agent; prose under docs/ is not."""
     normalized = str(path).replace("\\", "/")
     if _SKILL_PATH.search(normalized):
         return "skill"
+    if _DOCS_SEGMENT in f"/{normalized}":
+        return None
     if _AGENT_PATH.search(normalized) and not normalized.endswith("/README.md"):
         return "agent"
     return None

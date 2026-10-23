@@ -4,12 +4,19 @@
   "version": "1",
   "task": {
     "shape": "optimization",
-    "description": "Optimize a kernel against an executable cycle-count score."
+    "description": "Optimize a kernel against an executable cycle-count score.",
+    "closure_criteria": [
+      "best candidate passes real validation on the held-out inputs, not only the proxy score",
+      "cycle count improves over the single-agent baseline in all 3 repeated runs",
+      "every scored candidate is recorded in the harness ledger with its branch"
+    ],
+    "parallelism": "replica"
   },
   "platform": {
     "runtime": "claude-code-workflow",
     "max_concurrency": 15,
-    "nesting_depth": 1
+    "nesting_depth": 1,
+    "max_items": 256
   },
   "baseline": {
     "single_agent_score": 1336,
@@ -54,6 +61,11 @@
       "max_tokens": 128000,
       "skills": [
         "kernel-tuning"
+      ],
+      "tools": [
+        "Read",
+        "Write",
+        "Bash"
       ]
     },
     {
@@ -67,6 +79,11 @@
       "heartbeat_seconds": 120,
       "skills": [
         "kernel-tuning"
+      ],
+      "tools": [
+        "Read",
+        "Write",
+        "Bash"
       ]
     },
     {
@@ -85,34 +102,45 @@
       "id": "assign",
       "owner": "advisor",
       "start_condition": "epoch starts with harness evidence summary",
-      "done_criterion": "one concrete, non-overlapping experiment per worker"
+      "done_criterion": "one concrete, non-overlapping experiment per worker written to the ledger",
+      "monitor": "harness"
     },
     {
       "id": "experiment",
       "owner": "worker",
       "start_condition": "assignment received",
-      "done_criterion": "candidate submitted to evaluator or abandoned with reason"
+      "done_criterion": "candidate file submitted to the evaluator, or abandoned with a logged reason",
+      "monitor": "advisor"
     },
     {
       "id": "experiment-alt",
       "owner": "worker-alt",
       "start_condition": "assignment received",
-      "done_criterion": "candidate submitted to evaluator or abandoned with reason"
+      "done_criterion": "candidate file submitted to the evaluator, or abandoned with a logged reason",
+      "monitor": "advisor"
     },
     {
       "id": "score",
       "owner": "evaluator",
       "start_condition": "candidate submitted",
-      "done_criterion": "score recorded in harness ledger"
+      "done_criterion": "score recorded in harness ledger",
+      "monitor": "harness"
     }
   ],
   "communication": {
     "mode": "none",
-    "share_full_solutions": false
+    "share_full_solutions": false,
+    "ranking": "none"
+  },
+  "context_policy": {
+    "retained_tool_responses": 12,
+    "prune_unused_tools": true,
+    "stale_output": "drop"
   },
   "selection": {
     "strategy": "best_of_n_metric",
-    "candidates": 5
+    "candidates": 5,
+    "revision_peers": 0
   },
   "verification": {
     "judge_agents": [
@@ -137,10 +165,14 @@
   "monitoring": {
     "repeated_runs": 3,
     "heartbeat": true,
-    "track_cost": true
+    "track_cost": true,
+    "commitment_log": false,
+    "progress_check": "peer_override",
+    "critical_path_steps": true
   },
   "budget": {
     "max_tokens": 1000000000,
-    "expected_error_correlation": 0.4
+    "expected_error_correlation": 0.4,
+    "expected_tokens_per_instance": 20000000
   }
 }

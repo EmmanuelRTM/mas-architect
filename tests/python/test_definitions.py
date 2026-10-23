@@ -22,6 +22,10 @@ def test_kind_detection():
     assert definition_kind(".claude/agents/x.md") == "agent"
     assert definition_kind("skills/mas-design/SKILL.md") == "skill"
     assert definition_kind("docs/agents.md") is None
+    assert definition_kind("plugin/docs/agents/overview.md") is None
+    assert definition_kind("agents/nested/deep.md") is None
+    assert definition_kind("/abs/.claude/agents/reviewer.md") == "agent"
+    assert definition_kind("notes/agents-and-skills.md") is None
     assert definition_kind("src/main.py") is None
 
 

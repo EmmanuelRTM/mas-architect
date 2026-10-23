@@ -4,16 +4,23 @@
   "version": "1",
   "task": {
     "shape": "routing",
-    "description": "Route each request to the right agent among thousands of agent cards."
+    "description": "Route each request to the right agent among thousands of agent cards.",
+    "closure_criteria": [
+      "routing accuracy on the held-out query set is reported over 3 runs",
+      "every misroute in the audited sample is logged with the card that should have won"
+    ],
+    "parallelism": "replica"
   },
   "platform": {
     "runtime": "custom",
-    "max_concurrency": 32
+    "max_concurrency": 32,
+    "max_items": 1000
   },
   "baseline": {
     "single_agent_score": 0.81,
     "metric": "routing accuracy",
-    "runs": 3
+    "runs": 3,
+    "max_score": 1.0
   },
   "skills": [
     {
@@ -51,18 +58,21 @@
       "id": "route",
       "owner": "router",
       "start_condition": "request arrives with top-K preselected cards",
-      "done_criterion": "one agent card chosen with a reason"
+      "done_criterion": "one agent card chosen with a one-line reason, written to the routing log",
+      "monitor": "harness"
     },
     {
       "id": "audit",
       "owner": "route-auditor",
       "start_condition": "sampled 5% of routed requests",
-      "done_criterion": "misroutes logged with the card that should have won"
+      "done_criterion": "misroutes logged with the card that should have won and the score",
+      "monitor": "harness"
     }
   ],
   "communication": {
     "mode": "none",
-    "share_full_solutions": false
+    "share_full_solutions": false,
+    "ranking": "none"
   },
   "routing": {
     "catalog_size": 5000,
@@ -79,9 +89,12 @@
   },
   "monitoring": {
     "repeated_runs": 3,
-    "track_cost": true
+    "track_cost": true,
+    "commitment_log": false,
+    "progress_check": "self_report"
   },
   "budget": {
-    "expected_error_correlation": 0.5
+    "expected_error_correlation": 0.5,
+    "expected_tokens_per_instance": 4000
   }
 }

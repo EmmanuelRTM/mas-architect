@@ -65,7 +65,8 @@ _TABLE: dict[tuple[str, str | None], Recommendation] = {
         SONNET,
         "high",
         (
-            "Search-heavy: low effort makes Fable and Haiku search less and answer from memory.",
+            "Sonnet 5.5 guide: for researched work tell it to gather current sources rather than write from "
+            "training knowledge; at low effort it can skip verification, so keep it at high.",
             "Each researcher writes its own cited section, so it needs room to verify.",
         ),
     ),
@@ -78,10 +79,20 @@ _TABLE: dict[tuple[str, str | None], Recommendation] = {
         HAIKU, "medium", ("Evidence-grounded selection is cheap (TRACE ~1/258 of AggAgent's cost); spend on signal, not size.",)
     ),
     ("judge", None): Recommendation(
-        OPUS, "high", ("Independent review with few false alarms; keep it memoryless and off the generators' model.",)
+        OPUS,
+        "high",
+        (
+            "Opus 5.5 guide: stronger review with more bugs caught and fewer false alarms, and much less likely to "
+            "cite the wrong source; keep it memoryless and off the generators' model.",
+        ),
     ),
     ("verifier", None): Recommendation(
-        OPUS, "high", ("Independent review with few false alarms; keep it memoryless and off the generators' model.",)
+        OPUS,
+        "high",
+        (
+            "Opus 5.5 guide: stronger review with more bugs caught and fewer false alarms, and much less likely to "
+            "cite the wrong source; keep it memoryless and off the generators' model.",
+        ),
     ),
     ("critic", None): Recommendation(
         OPUS, "high", ("A fresh-context critic outperforms self-critique; give it effort, not memory.",)

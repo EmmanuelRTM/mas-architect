@@ -2,6 +2,13 @@
   "description": "mas-architect: deterministic checks plus the control-panel module.",
   "modules": ["./register.tsx"],
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "python3", "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/hook_session_limits.py"], "timeout": 10 }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Write|Edit|MultiEdit|NotebookEdit",

@@ -4,17 +4,24 @@
   "version": "1",
   "task": {
     "shape": "short_verifiable",
-    "description": "Short answers with a checkable ground truth (math, QA, multiple choice)."
+    "description": "Short answers with a checkable ground truth (math, QA, multiple choice).",
+    "closure_criteria": [
+      "exact-match score reported over 3 runs against the single-agent baseline",
+      "the selector's choice survives the order-swap bias injection on the test set"
+    ],
+    "parallelism": "replica"
   },
   "platform": {
     "runtime": "claude-code-workflow",
     "max_concurrency": 8,
-    "nesting_depth": 1
+    "nesting_depth": 1,
+    "max_items": 512
   },
   "baseline": {
     "single_agent_score": 0.343,
     "metric": "exact match",
-    "runs": 3
+    "runs": 3,
+    "max_score": 1.0
   },
   "skills": [
     {
@@ -85,30 +92,35 @@
       "id": "solve",
       "owner": "solver-claude",
       "start_condition": "item received",
-      "done_criterion": "answer plus retrieved evidence returned"
+      "done_criterion": "answer plus retrieved evidence returned as JSON",
+      "monitor": "harness"
     },
     {
       "id": "solve-alt",
       "owner": "solver-openai",
       "start_condition": "item received",
-      "done_criterion": "answer plus retrieved evidence returned"
+      "done_criterion": "answer plus retrieved evidence returned as JSON",
+      "monitor": "harness"
     },
     {
       "id": "solve-qwen",
       "owner": "solver-qwen",
       "start_condition": "item received",
-      "done_criterion": "answer plus retrieved evidence returned"
+      "done_criterion": "answer plus retrieved evidence returned as JSON",
+      "monitor": "harness"
     },
     {
       "id": "select",
       "owner": "selector",
       "start_condition": "all candidates in",
-      "done_criterion": "one answer chosen, survives order-swap bias injection"
+      "done_criterion": "one answer chosen and logged; the choice survives order-swap bias injection",
+      "monitor": "harness"
     }
   ],
   "communication": {
     "mode": "none",
-    "share_full_solutions": false
+    "share_full_solutions": false,
+    "ranking": "none"
   },
   "selection": {
     "strategy": "bias_controlled",
@@ -129,9 +141,12 @@
   },
   "monitoring": {
     "repeated_runs": 3,
-    "track_cost": true
+    "track_cost": true,
+    "commitment_log": false,
+    "progress_check": "self_report"
   },
   "budget": {
-    "expected_error_correlation": 0.3
+    "expected_error_correlation": 0.3,
+    "expected_tokens_per_instance": 6000
   }
 }

@@ -64,12 +64,14 @@ class ExtremeEffortRule(Rule):
         for agent, _ in _claude_agents(spec):
             if agent.get("effort") not in EXTREME_EFFORTS or agent.get("effort_justification"):
                 continue
+            message = (
+                f"{agent.get('id')!r} runs at {agent['effort']} across {instances(agent)} instance(s). Add "
+                "`effort_justification` with the eval gain, or drop to high."
+            )
             if instances(agent) >= 3 or agent.get("role") in ("router", "selector"):
-                yield self.warning(
-                    f"{agent.get('id')!r} runs at {agent['effort']} across {instances(agent)} instance(s). Add "
-                    "`effort_justification` with the eval gain, or drop to high.",
-                    agent_path(agent, "effort"),
-                )
+                yield self.warning(message, agent_path(agent, "effort"))
+            else:
+                yield self.info(message, agent_path(agent, "effort"))
 
 
 @register
@@ -98,7 +100,10 @@ class ThinkingCompatibilityRule(Rule):
     id = "MAS025"
     title = "Thinking mode accepted by the model at that effort"
     practice = "MOD"
-    evidence = "Opus 5.5 cannot disable thinking; Sonnet between_tools and Haiku disabled only at high or below (API 400 otherwise)."
+    evidence = (
+        "Documented rejections: Opus 5.5 cannot disable thinking; Sonnet 5.5 between_tools and Haiku 5.5 disabled "
+        "only at high or below (API 400 otherwise). Other combinations are not documented in the guides."
+    )
 
     def check(self, spec):
         for agent, model in _claude_agents(spec):
@@ -106,12 +111,19 @@ class ThinkingCompatibilityRule(Rule):
             if mode is None or model is None:
                 continue
             path = agent_path(agent, "thinking")
+            effort = _effective_effort(agent, model)
             if mode not in THINKING_MODES:
                 yield self.error(f"thinking {mode!r} is not one of {', '.join(THINKING_MODES)}.", path)
-            elif mode not in model.thinking_allowed:
-                yield self.error(f"{model.id} does not accept thinking={mode}.", path)
-            elif _effective_effort(agent, model) not in model.thinking_allowed[mode]:
-                yield self.error(f"{model.id} accepts thinking={mode} only at effort high or below.", path)
+            elif effort in model.thinking_allowed.get(mode, ()):
+                continue
+            elif effort in model.thinking_rejected.get(mode, ()):
+                yield self.error(f"{model.id} rejects thinking={mode} at effort {effort} (documented API 400).", path)
+            else:
+                yield self.warning(
+                    f"thinking={mode} at effort {effort} on {model.id} is not documented in the model's guide; "
+                    "test the request before relying on it.",
+                    path,
+                )
 
 
 @register
@@ -141,7 +153,10 @@ class MaxTokensHeadroomRule(Rule):
     id = "MAS027"
     title = "max_tokens leaves room for thinking"
     practice = "MOD"
-    evidence = "Thinking counts toward max_tokens; guides suggest up to 128,000 for agentic coding."
+    evidence = (
+        "Thinking counts toward max_tokens; the Opus 5.5 and Sonnet 5.5 guides recommend 128,000 (the maximum) for "
+        f"long agentic turns. The {MIN_MAX_TOKENS_WITH_THINKING:,} threshold is this plugin's heuristic."
+    )
 
     def check(self, spec):
         for agent, model in _claude_agents(spec):

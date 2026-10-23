@@ -25,7 +25,14 @@ def lint(spec: dict, rules: Iterable[Rule] | None = None) -> Report:
         metrics=compute_metrics(spec),
         practices=_practice_status(spec, findings),
         agents=_model_plan(spec),
+        monitoring=_section(spec, "monitoring"),
+        platform=_section(spec, "platform"),
     )
+
+
+def _section(spec: dict, key: str) -> dict:
+    value = spec.get(key)
+    return dict(value) if isinstance(value, dict) else {}
 
 
 def _practice_status(spec: dict, findings: list[Finding]) -> dict[str, str]:

@@ -32,6 +32,10 @@ def _present(v):
     return v is not None
 
 
+def _at_least(n):
+    return lambda v: isinstance(v, int) and v >= n
+
+
 def _has_role(role):
     return Requirement(f"agents[role={role}]", lambda spec: any(a.get("role") == role for a in agents(spec)), f"an agent with role '{role}'")
 
@@ -49,10 +53,12 @@ SHAPE_REQUIREMENTS: dict[str, tuple[Requirement, ...]] = {
     ),
     "codebase_long": (
         Requirement("planning.joint_exploration", _true, "true (explore jointly before partitioning)"),
+        Requirement("planning.negotiated_partition", _true, "true (agents negotiate the partition after exploring)"),
         Requirement("communication.mode", _one_of("passive", "non_blocking"), "'passive' or 'non_blocking'"),
     ),
     "cited_report": (
         Requirement("planning.fixed_spec", _true, "true (a validated ResearchSpec that stays fixed)"),
+        Requirement("planning.planner_ensemble", _at_least(2), ">= 2 (several candidate specs, one judged best; LongCat)"),
         Requirement("merge.input", _one_of("raw_evidence", "snippets"), "'raw_evidence' or 'snippets'"),
         _has_role("editor"),
     ),

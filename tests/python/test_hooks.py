@@ -134,3 +134,33 @@ def test_definitions_hook_flags_unknown_sibling_skill(tmp_path):
     out = run_hook("hook_validate_definitions.py", payload)
     assert "DEF012" in out["hookSpecificOutput"]["additionalContext"]
     assert "qa-rubrik" in out["hookSpecificOutput"]["additionalContext"]
+
+
+def test_lint_hook_emits_decision_when_report_dir_is_unwritable(tmp_path):
+    import os
+
+    spec = tmp_path / "bad.mas.json"
+    shutil.copy(FIXTURES / "antipatterns.mas.json", spec)
+    blocker = tmp_path / "not-a-dir"
+    blocker.write_text("x")
+    env = dict(os.environ, MAS_ARCHITECT_REPORT_DIR=str(blocker))
+    payload = {"tool_name": "Write", "cwd": str(tmp_path), "tool_input": {"file_path": str(spec)}}
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPTS / "hook_lint_spec.py")], input=json.dumps(payload), capture_output=True, text=True, env=env
+    )
+    assert proc.returncode == 0
+    assert json.loads(proc.stdout)["decision"] == "block"
+    assert "report" in proc.stderr.lower()
+
+
+def test_session_limits_hook_adds_context(tmp_path):
+    payload = {"hook_event_name": "SessionStart", "cwd": str(tmp_path), "source": "startup"}
+    out = run_hook("hook_session_limits.py", payload)
+    block = out["hookSpecificOutput"]
+    assert block["hookEventName"] == "SessionStart"
+    text = block["additionalContext"]
+    for needle in ("20 concurrent subagents", "CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS", "three", "16", "256", "1,000", "4,096", "25 agents", "1.5 million", "prompt cache"):
+        assert needle in text, needle
+    for command in ("new", "lint", "models", "audit", "baseline", "generate", "review", "verify"):
+        assert f"/mas-architect:{command}" in text, command
+    assert "/mas-panel" in text

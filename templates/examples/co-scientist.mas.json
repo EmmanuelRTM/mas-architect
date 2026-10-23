@@ -1,0 +1,210 @@
+{
+  "$schema": "../spec.schema.json",
+  "name": "co-scientist",
+  "version": "1",
+  "task": {
+    "shape": "judgment_science",
+    "description": "Hypothesis generation and experiment planning where value is judged, not scored: a scientist agent with memory proposes, fresh reviewers and a blinded critic push back, a human sets taste and decides.",
+    "closure_criteria": [
+      "each hypothesis has a written review, a blinded critique and a human decision recorded",
+      "every proposed experiment lists its controls and the validation that would falsify it",
+      "the human accepted or rejected each hypothesis; nothing is promoted by the agents alone",
+      "the same protocol produces comparable decisions over 3 repeated runs"
+    ],
+    "parallelism": "structural"
+  },
+  "platform": {
+    "runtime": "claude-code-subagents",
+    "max_concurrency": 3,
+    "nesting_depth": 1
+  },
+  "baseline": {
+    "single_agent_score": 0.52,
+    "metric": "fraction of hypotheses the human rated worth testing",
+    "max_score": 1.0,
+    "runs": 3
+  },
+  "human_in_the_loop": true,
+  "skills": [
+    {
+      "name": "hypothesis-writing",
+      "description": "How to state a hypothesis with its controls, predictions and falsifying validation",
+      "source": "project"
+    },
+    {
+      "name": "literature-grounding",
+      "description": "How to ground a hypothesis in cited prior work",
+      "source": "project"
+    },
+    {
+      "name": "review-rubric",
+      "description": "Rubric for reviewing a hypothesis fresh: novelty, feasibility, controls",
+      "source": "project"
+    },
+    {
+      "name": "blind-critique",
+      "description": "How to critique an anonymised hypothesis without seeing its author or rationale",
+      "source": "project"
+    }
+  ],
+  "agents": [
+    {
+      "id": "lead",
+      "role": "orchestrator",
+      "model": "claude-fable-5-1",
+      "model_family": "claude",
+      "context": "isolated",
+      "stateful": false,
+      "effort": "high",
+      "max_tokens": 64000,
+      "tools": [
+        "Read",
+        "Write",
+        "Agent"
+      ],
+      "skills": []
+    },
+    {
+      "id": "scientist",
+      "role": "researcher",
+      "count": 1,
+      "model": "claude-sonnet-5-5",
+      "model_family": "claude",
+      "context": "isolated",
+      "stateful": true,
+      "heartbeat_seconds": 180,
+      "effort": "high",
+      "max_tokens": 128000,
+      "tools": [
+        "Read",
+        "Write",
+        "WebSearch",
+        "WebFetch"
+      ],
+      "skills": [
+        "hypothesis-writing",
+        "literature-grounding"
+      ]
+    },
+    {
+      "id": "reviewer",
+      "role": "reviewer",
+      "model": "gpt-5.5",
+      "model_family": "openai",
+      "context": "isolated",
+      "stateful": false,
+      "memoryless": true,
+      "tools": [
+        "Read"
+      ],
+      "skills": [
+        "review-rubric"
+      ]
+    },
+    {
+      "id": "blind-critic",
+      "role": "critic",
+      "model": "claude-opus-5-5",
+      "model_family": "claude",
+      "context": "isolated",
+      "stateful": false,
+      "memoryless": true,
+      "effort": "high",
+      "max_tokens": 64000,
+      "tools": [
+        "Read"
+      ],
+      "skills": [
+        "blind-critique"
+      ],
+      "instructions": "You receive an anonymised hypothesis with its author and rationale removed. List the weakest assumption, the missing control and the cheapest experiment that could falsify it."
+    }
+  ],
+  "tasks": [
+    {
+      "id": "hypothesize",
+      "owner": "scientist",
+      "monitor": "lead",
+      "start_condition": "research question and human taste notes received",
+      "done_criterion": "hypothesis file written with controls, predictions and cited prior work"
+    },
+    {
+      "id": "review",
+      "owner": "reviewer",
+      "monitor": "lead",
+      "start_condition": "hypothesis file exists",
+      "done_criterion": "review scored against the rubric and written to the review file"
+    },
+    {
+      "id": "critique",
+      "owner": "blind-critic",
+      "monitor": "lead",
+      "start_condition": "anonymised hypothesis prepared by the harness",
+      "done_criterion": "critique file lists the weakest assumption, the missing control and a falsifying experiment"
+    },
+    {
+      "id": "decide",
+      "owner": "lead",
+      "monitor": "harness",
+      "start_condition": "review and critique files exist",
+      "done_criterion": "decision record written with the human's accept/reject and the next experiment, or the hypothesis returned to the scientist with the critique"
+    }
+  ],
+  "communication": {
+    "mode": "non_blocking",
+    "share_full_solutions": false,
+    "gated_isolation": true,
+    "ranking": "none",
+    "memory": {
+      "type": "claim_ledger",
+      "claim_states": [
+        "proposed",
+        "confirmed",
+        "contested",
+        "superseded"
+      ]
+    }
+  },
+  "context_policy": {
+    "retained_tool_responses": 12,
+    "prune_unused_tools": true,
+    "stale_output": "drop"
+  },
+  "selection": {
+    "strategy": "bias_controlled",
+    "candidates": 1,
+    "revision_peers": 1
+  },
+  "merge": {
+    "input": "raw_evidence",
+    "agent": "lead",
+    "recall_tool": true
+  },
+  "verification": {
+    "judge_agents": [
+      "reviewer",
+      "blind-critic"
+    ]
+  },
+  "state": {
+    "location": "harness",
+    "reset_policy": {
+      "type": "none"
+    }
+  },
+  "monitoring": {
+    "repeated_runs": 3,
+    "belief_probes": true,
+    "heartbeat": true,
+    "track_cost": true,
+    "commitment_log": true,
+    "progress_check": "peer_override",
+    "critical_path_steps": true
+  },
+  "budget": {
+    "max_tokens": 3000000,
+    "max_model_calls": 300,
+    "expected_error_correlation": 0.5,
+    "expected_tokens_per_instance": 500000
+  }
+}

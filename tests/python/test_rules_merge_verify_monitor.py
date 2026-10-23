@@ -57,3 +57,33 @@ def test_mas021_training_needs_team_level_credit(make_spec, rule_ids):
 def test_mas021_team_credit_passes(make_spec, rule_ids):
     spec = make_spec(training={"credit_assignment": "active_set", "peer_families": 2})
     assert "MAS021" not in rule_ids(spec, severities=("error", "warning", "info"))
+
+
+def test_mas012_full_transcripts_is_info(make_spec):
+    spec = make_spec(merge={"input": "full_transcripts"})
+    assert _severity(spec, "MAS012") == {"info"}
+
+
+def test_mas013_judge_model_on_half_of_generators_warns(make_spec):
+    spec = make_spec()
+    spec["agents"][-1]["model"] = "claude-sonnet-5-5"  # selector; 3 of 8 generator instances run sonnet
+    assert _severity(spec, "MAS013") == {"info"}
+    spec["agents"][0]["count"] = 8  # now 8 of 13
+    assert _severity(spec, "MAS013") == {"warning"}
+
+
+def test_mas037_shared_machine_needs_commitment_log(make_spec):
+    spec = make_spec(platform={"shared_resources": True})
+    assert _severity(spec, "MAS037") == {"warning"}
+
+
+def test_mas037_passive_channel_needs_commitment_log(make_spec, rule_ids):
+    spec = make_spec(communication={"mode": "passive", "memory": {"type": "claim_ledger", "claim_states": ["proposed", "contested"]}})
+    assert "MAS037" in rule_ids(spec)
+    spec["monitoring"]["commitment_log"] = True
+    assert "MAS037" not in rule_ids(spec)
+
+
+def test_mas037_popularity_ranking_is_info(make_spec):
+    spec = make_spec(communication={"ranking": "popularity"})
+    assert _severity(spec, "MAS037") == {"info"}

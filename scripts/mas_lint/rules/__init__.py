@@ -2,7 +2,9 @@
 
 from . import (  # noqa: F401  (imported for their @register side effect)
     baseline,
+    context,
     coordination,
+    decomposition,
     diversity,
     fit,
     hygiene,

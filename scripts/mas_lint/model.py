@@ -41,6 +41,8 @@ class Report:
     metrics: dict[str, Any] = field(default_factory=dict)
     practices: dict[str, str] = field(default_factory=dict)
     agents: list[dict[str, Any]] = field(default_factory=list)
+    monitoring: dict[str, Any] = field(default_factory=dict)
+    platform: dict[str, Any] = field(default_factory=dict)
 
     @property
     def has_errors(self) -> bool:
@@ -59,5 +61,7 @@ class Report:
             "practices": dict(self.practices),
             "metrics": dict(self.metrics),
             "agents": list(self.agents),
+            "monitoring": dict(self.monitoring),
+            "platform": dict(self.platform),
             "findings": [f.to_dict() for f in self.findings],
         }

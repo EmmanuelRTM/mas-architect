@@ -45,7 +45,10 @@ def handle(event: dict) -> dict | None:
     report = lint(spec)
     data = report.to_dict()
     data["path"] = str(path)
-    save_report(report_dir(event), data)
+    try:
+        save_report(report_dir(event), data)
+    except OSError as exc:  # the decision matters more than the panel's copy
+        print(f"mas-architect: could not save the lint report ({exc}); the panel will not update.", file=sys.stderr)
     summary = report.summary()
     headline = f"mas-architect lint of {path.name}: {summary['error']} errors, {summary['warning']} warnings."
     if report.has_errors:

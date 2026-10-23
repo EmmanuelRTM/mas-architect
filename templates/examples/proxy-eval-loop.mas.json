@@ -1,0 +1,194 @@
+{
+  "$schema": "../spec.schema.json",
+  "name": "proxy-eval-loop",
+  "version": "1",
+  "task": {
+    "shape": "expensive_eval",
+    "description": "Evolve candidate programs when the real evaluation (a wet-lab assay, a long simulation) is slow or costly: a learned proxy screens, the real evaluator admits.",
+    "closure_criteria": [
+      "a promoted candidate passed real validation, not only the proxy score",
+      "every 10th promotion is re-scored on the held-out set and the proxy is recalibrated against it",
+      "near-duplicate proposals are dropped before they reach the proxy",
+      "improvement over the single-agent baseline holds in all 3 repeated runs"
+    ],
+    "parallelism": "replica"
+  },
+  "platform": {
+    "runtime": "claude-code-workflow",
+    "max_concurrency": 8,
+    "nesting_depth": 1,
+    "max_items": 256
+  },
+  "baseline": {
+    "single_agent_score": 0.41,
+    "metric": "fraction of the single-agent final improvement reached (real evaluation)",
+    "max_score": 1.0,
+    "runs": 3
+  },
+  "skills": [
+    {
+      "name": "program-proposal",
+      "description": "How to propose a candidate program from the archive of real outcomes",
+      "source": "project"
+    },
+    {
+      "name": "proxy-fitting",
+      "description": "How to write and refit a proxy evaluator against the archive of real outcomes",
+      "source": "project"
+    },
+    {
+      "name": "real-validation-protocol",
+      "description": "How the real evaluator scores a candidate and what counts as a pass",
+      "source": "project"
+    }
+  ],
+  "agents": [
+    {
+      "id": "proposer",
+      "role": "worker",
+      "count": 3,
+      "model": "claude-sonnet-5-5",
+      "model_family": "claude",
+      "context": "isolated",
+      "stateful": false,
+      "heartbeat_seconds": 120,
+      "effort": "high",
+      "max_tokens": 128000,
+      "tools": [
+        "Read",
+        "Write",
+        "Bash"
+      ],
+      "skills": [
+        "program-proposal"
+      ]
+    },
+    {
+      "id": "proposer-alt",
+      "role": "worker",
+      "count": 2,
+      "model": "gpt-5.5",
+      "model_family": "openai",
+      "context": "isolated",
+      "stateful": false,
+      "heartbeat_seconds": 120,
+      "tools": [
+        "Read",
+        "Write",
+        "Bash"
+      ],
+      "skills": [
+        "program-proposal"
+      ]
+    },
+    {
+      "id": "proxy-writer",
+      "role": "worker",
+      "count": 1,
+      "model": "claude-opus-5-5",
+      "model_family": "claude",
+      "context": "isolated",
+      "stateful": false,
+      "heartbeat_seconds": 120,
+      "effort": "medium",
+      "max_tokens": 128000,
+      "tools": [
+        "Read",
+        "Write",
+        "Bash"
+      ],
+      "skills": [
+        "proxy-fitting"
+      ]
+    },
+    {
+      "id": "real-evaluator",
+      "role": "evaluator",
+      "model": "deterministic",
+      "model_family": "none",
+      "context": "isolated",
+      "stateful": false,
+      "memoryless": true,
+      "tools": [
+        "Bash"
+      ],
+      "skills": [
+        "real-validation-protocol"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "propose",
+      "owner": "proposer",
+      "monitor": "harness",
+      "start_condition": "archive of real outcomes and current proxy available",
+      "done_criterion": "candidate program file written with its proxy score, or dropped as a near-duplicate with the match logged"
+    },
+    {
+      "id": "propose-alt",
+      "owner": "proposer-alt",
+      "monitor": "harness",
+      "start_condition": "archive of real outcomes and current proxy available",
+      "done_criterion": "candidate program file written with its proxy score, or dropped as a near-duplicate with the match logged"
+    },
+    {
+      "id": "refit-proxy",
+      "owner": "proxy-writer",
+      "monitor": "harness",
+      "start_condition": "10 new real outcomes since the last fit",
+      "done_criterion": "proxy evaluator file refit; held-out agreement with real outcomes recorded in the ledger"
+    },
+    {
+      "id": "validate",
+      "owner": "real-evaluator",
+      "monitor": "harness",
+      "start_condition": "proxy-approved candidate queued",
+      "done_criterion": "real score recorded in the harness ledger; candidate promoted only if it passes"
+    }
+  ],
+  "communication": {
+    "mode": "none",
+    "share_full_solutions": false,
+    "ranking": "none"
+  },
+  "context_policy": {
+    "retained_tool_responses": 12,
+    "prune_unused_tools": true,
+    "stale_output": "drop"
+  },
+  "selection": {
+    "strategy": "best_of_n_metric",
+    "candidates": 5,
+    "revision_peers": 0,
+    "dedup": true
+  },
+  "verification": {
+    "judge_agents": [
+      "real-evaluator"
+    ],
+    "evaluator_protected": true,
+    "real_validation_before_promotion": true,
+    "held_out_audit_every": 10
+  },
+  "state": {
+    "location": "harness",
+    "reset_policy": {
+      "type": "stateless_epochs"
+    }
+  },
+  "monitoring": {
+    "repeated_runs": 3,
+    "heartbeat": true,
+    "track_cost": true,
+    "commitment_log": false,
+    "progress_check": "peer_override",
+    "critical_path_steps": true
+  },
+  "budget": {
+    "max_tokens": 50000000,
+    "max_model_calls": 2000,
+    "expected_error_correlation": 0.4,
+    "expected_tokens_per_instance": 2000000
+  }
+}
