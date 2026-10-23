@@ -19,6 +19,7 @@ description: Audit an existing multi-agent system (code, workflow scripts, agent
    - Is there a measured single-agent baseline at matched budget?
    - Do tool lists per agent contain tools it never calls?
    - Are model and effort chosen per role, or inherited everywhere?
+   - Does each agent preload the skills its role needs (subagents do not inherit them), at most four, and do judges avoid the generators' playbook?
    - Do prompts ask models to write out their reasoning?
 5. **Independent review.** Give the spec path (not your notes) to the `mas-critic` agent; merge its findings with yours, keeping both sources.
 6. **Report.** Lead with the three changes that most likely raise the team's final answer per token. For each finding: practice, evidence in the code, fix, and the paper or guide behind it. Put the full list after the top three.

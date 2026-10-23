@@ -54,6 +54,10 @@ Severidades: **error** bloquea (el hook devuelve `decision: block`), **warning**
 | MAS026 | MOD | Do not ask for reasoning in the reply | Fable 5.1/Opus 5.5/Sonnet 5.5 may refuse with reasoning_extraction; Haiku 5.5 leaks reasoning-like text. |
 | MAS027 | MOD | max_tokens leaves room for thinking | Thinking counts toward max_tokens; guides suggest up to 128,000 for agentic coding. |
 | MAS028 | MOD | Role-model fit (advisory) | Recommendation table in model_advisor.py (research roles x model guides). |
+| MAS029 | P5 | Every agent states which skills it preloads | Subagents do not inherit the parent's skills; an undeclared playbook is either missing or loaded ad hoc. |
+| MAS030 | OPS | Agent skills exist in the spec's skill catalog | Claude Code skips an unresolved skill with only a warning, so the agent silently runs without it. |
+| MAS031 | P5 | At most 4 preloaded skills per agent | Each preloaded skill injects its whole SKILL.md at startup; context growth is a binding constraint. |
+| MAS032 | P8 | Judges do not preload the generators' playbook | A judge primed with the same heuristics as the generators shares their blind spots (correlated errors, self-preference). |
 
 ## Reglas de definiciones (`agents/*.md`, `skills/*/SKILL.md`)
 
@@ -70,6 +74,9 @@ Severidades: **error** bloquea (el hook devuelve `decision: block`), **warning**
 | DEF009 | warning | El nombre del skill coincide con su carpeta |
 | DEF010 | info / error | `effort` declarado y válido |
 | DEF011 | error / warning | No pide razonamiento visible en la respuesta (`reasoning_extraction`) |
+| DEF012 | warning | Cada skill en `skills:` es kebab-case (u `plugin:skill`) y existe junto al agente |
+| DEF013 | warning | `Skill` no va en `tools`; se usa el campo `skills:` |
+| DEF014 | info / warning | El agente declara `skills` (los subagentes no heredan los del padre) y precarga ≤ 4 |
 
 ## Hooks
 

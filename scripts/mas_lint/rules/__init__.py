@@ -12,6 +12,7 @@ from . import (  # noqa: F401  (imported for their @register side effect)
     platform,
     schema,
     selection,
+    skills,
     state,
 )
 from .base import Rule, registered

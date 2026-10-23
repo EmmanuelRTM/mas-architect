@@ -2,6 +2,8 @@
 name: mas-model-planner
 description: Assigns a Claude model (Fable 5.1, Opus 5.5, Sonnet 5.5, Haiku 5.5) and an effort level to every agent of a multi-agent spec, with thinking mode and max_tokens where needed. Use when a spec or a set of agent files needs model and reasoning-level decisions or a cost/quality rebalance.
 tools: Read, Edit, Bash
+skills:
+  - mas-model-selection
 model: sonnet
 effort: medium
 ---

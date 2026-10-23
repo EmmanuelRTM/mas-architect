@@ -10,6 +10,7 @@ JSON (YAML `.mas.yaml` works when PyYAML is installed). The JSON Schema is `temp
                 "max_concurrency": 8, "nesting_depth": 1, "concurrency_override": false },
   "baseline": { "single_agent_score": 48.7, "metric": "DRB-II", "runs": 3 },        // P1
   "planning": { "fixed_spec": true, "planner_ensemble": 3, "joint_exploration": false, "negotiated_partition": false },
+  "skills": [{ "name": "citation-format", "description": "...", "source": "plugin|project|user|harness" }],  // catalog; agents preload only these
   "agents": [{
     "id": "section-researcher",                   // unique
     "role": "planner|worker|researcher|solver|orchestrator|advisor|manager|judge|verifier|critic|selector|reviewer|editor|router",
@@ -22,6 +23,7 @@ JSON (YAML `.mas.yaml` works when PyYAML is installed). The JSON Schema is `temp
     "max_tokens": 128000,
     "context": "isolated|shared", "stateful": false, "memoryless": true,
     "heartbeat_seconds": 60,
+    "skills": ["source-search", "citation-format"],   // preloaded at startup; [] for none (see skill-assignment.md)
     "instructions": "short role prompt (never ask for visible reasoning)"
   }],
   "tasks": [{ "id": "research", "owner": "section-researcher",

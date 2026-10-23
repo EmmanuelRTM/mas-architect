@@ -25,7 +25,7 @@ const REPORT = {
   practices: { P1: 'pass', P3: 'warn', OPS: 'fail' },
   metrics: { effective_team_size: 2.0, candidates: 3 },
   agents: [
-    { id: 'planner', role: 'planner', count: 3, model: 'claude-opus-5-5', effort: 'high', recommended: { model: 'claude-opus-5-5', effort: 'high' } },
+    { id: 'planner', role: 'planner', count: 3, model: 'claude-opus-5-5', effort: 'high', skills: ['report-spec-planning'], recommended: { model: 'claude-opus-5-5', effort: 'high' } },
     { id: 'selector', role: 'selector', count: 1, model: 'claude-opus-5-5', effort: 'max', recommended: { model: 'claude-haiku-5-5', effort: 'medium' } },
   ],
   findings: [
@@ -47,6 +47,8 @@ test('pure helpers shape the data', () => {
   expect(view?.errors).toBe(1)
   expect(view?.findings.length).toBe(1)
   expect(view?.plan[1]?.matches).toBe(false)
+  expect(view?.plan[0]?.skills).toBe(1)
+  expect(view?.plan[1]?.skills).toBe(null)
   expect(parseReport('not json')).toBe(null)
   expect(parseReport('{"spec": "x"}')).toBe(null)
 })
@@ -83,6 +85,8 @@ test('live agents, usage and the lint report reach the pane', async ($, on) => {
     expect(await ui.find({ type: 'Text', text: /cost \$1\.50 · context 42%/ })).toBeDefined()
     expect(await ui.find({ type: 'Text', text: /1 errors · 2 warnings/ })).toBeDefined()
     expect(await ui.find({ type: 'Text', text: /selector .* → haiku-5-5@medium/ })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /planner .*opus-5-5@high · 1 skill\b/ })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /selector .*skills\?/ })).toBeDefined()
     expect(await ui.find({ type: 'Text', text: /MAS016 Too many subagents/ })).toBeDefined()
     await ui.unmount()
   }

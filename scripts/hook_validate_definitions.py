@@ -8,6 +8,7 @@ import sys
 from mas_lint.definitions import definition_kind, lint_definition, short_path
 from mas_lint.hookio import WRITE_TOOLS, post_block, post_context, run, target_path
 from mas_lint.model import Severity
+from mas_lint.skill_refs import discover_skills
 
 
 def handle(event: dict) -> dict | None:
@@ -17,7 +18,8 @@ def handle(event: dict) -> dict | None:
     kind = definition_kind(str(path)) if path else None
     if kind is None or not path.is_file():
         return None
-    findings = lint_definition(path.read_text(encoding="utf-8"), kind, str(path))
+    known = (discover_skills(path) or None) if kind == "agent" else None
+    findings = lint_definition(path.read_text(encoding="utf-8"), kind, str(path), known)
     serious = [f for f in findings if f.severity is not Severity.INFO]
     if not serious:
         return None

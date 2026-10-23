@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Iterable
 
-from .accessors import agents, instances, shape
+from .accessors import agent_skills, agents, instances, shape
 from .catalog import resolve_model
 from .metrics import compute_metrics
 from .model import Finding, Report, Severity
@@ -53,6 +53,7 @@ def _model_plan(spec: dict) -> list[dict]:
                 "model": model.id if model else agent.get("model"),
                 "effort": agent.get("effort") or (model.default_effort if model else None),
                 "effort_is_default": agent.get("effort") is None and model is not None,
+                "skills": agent_skills(agent),
                 "recommended": recommend(agent.get("role"), shape(spec)).to_dict(),
             }
         )

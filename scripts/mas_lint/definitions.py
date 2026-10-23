@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import re
 from pathlib import PurePosixPath
+from typing import Iterable
 
 from . import frontmatter
 from .catalog import EFFORT_LEVELS, resolve_model
 from .model import Finding, Severity
 from .reasoning import asks_for_visible_reasoning
 from .secrets import find_secrets
+from .skill_refs import MAX_PRELOADED_SKILLS, is_valid_skill_ref, parse_skill_list, unknown_refs
 
 _AGENT_PATH = re.compile(r"(?:^|/)agents/[^/]+\.md$")
 _SKILL_PATH = re.compile(r"(?:^|/)skills/([^/]+)/SKILL\.md$")
@@ -32,7 +34,8 @@ def _finding(rule_id: str, severity: Severity, message: str, path: str) -> Findi
     return Finding(rule_id=rule_id, severity=severity, message=message, practice="DEF", path=path)
 
 
-def lint_definition(text: str, kind: str, path: str) -> list[Finding]:
+def lint_definition(text: str, kind: str, path: str, known_skills: Iterable[str] | None = None) -> list[Finding]:
+    """Lint one definition. `known_skills`, when given, enables the unknown-skill check."""
     doc = frontmatter.parse(text)
     out: list[Finding] = []
     err = lambda rid, msg: out.append(_finding(rid, Severity.ERROR, msg, path))  # noqa: E731
@@ -55,6 +58,7 @@ def lint_definition(text: str, kind: str, path: str) -> list[Finding]:
         err("DEF007", f"Possible {match.kind} on line {match.line}; reference secrets by environment variable.")
     if kind == "agent":
         _lint_agent(doc, err, warn, info)
+        _lint_agent_skills(doc, known_skills, warn, info)
     elif kind == "skill":
         _lint_skill(doc, path, name, warn)
     return out
@@ -78,6 +82,25 @@ def _lint_agent(doc, err, warn, info) -> None:
             warn("DEF011", message)
         else:
             err("DEF011", message + " Fable 5.1, Opus 5.5 and Sonnet 5.5 may refuse it (reasoning_extraction).")
+
+
+def _lint_agent_skills(doc, known_skills, warn, info) -> None:
+    tools = parse_skill_list(doc.fields.get("tools"))
+    if "Skill" in tools:
+        warn("DEF013", "`Skill` in `tools` is deprecated; list the skills this agent needs under `skills:`.")
+    if "skills" not in doc.fields:
+        info("DEF014", "No `skills`: subagents do not inherit the parent's skills. Preload the ones this role runs every time, or write `skills: []`.")
+        return
+    refs = parse_skill_list(doc.fields.get("skills"))
+    malformed = [ref for ref in refs if not is_valid_skill_ref(ref)]
+    if malformed:
+        warn("DEF012", f"Skill names must be kebab-case, optionally `plugin:skill` (got {', '.join(malformed)}).")
+    if known_skills is not None:
+        missing = unknown_refs([r for r in refs if r not in malformed and ":" not in r], known_skills)
+        if missing:
+            warn("DEF012", f"Skills not found next to this agent: {', '.join(missing)}. Claude Code skips them with a warning.")
+    if len(refs) > MAX_PRELOADED_SKILLS:
+        warn("DEF014", f"{len(refs)} preloaded skills; each injects its full SKILL.md at startup. Keep at most {MAX_PRELOADED_SKILLS} and let the rest load on demand.")
 
 
 def _lint_skill(doc, path, name, warn) -> None:

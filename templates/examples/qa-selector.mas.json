@@ -16,6 +16,18 @@
     "metric": "exact match",
     "runs": 3
   },
+  "skills": [
+    {
+      "name": "qa-solving",
+      "description": "How to answer and cite evidence for a question",
+      "source": "project"
+    },
+    {
+      "name": "evidence-selection-rubric",
+      "description": "How to pick the candidate best supported by evidence",
+      "source": "project"
+    }
+  ],
   "agents": [
     {
       "id": "solver-claude",
@@ -25,7 +37,10 @@
       "model_family": "claude",
       "context": "isolated",
       "stateful": false,
-      "effort": "medium"
+      "effort": "medium",
+      "skills": [
+        "qa-solving"
+      ]
     },
     {
       "id": "solver-openai",
@@ -34,7 +49,10 @@
       "model": "gpt-5.5",
       "model_family": "openai",
       "context": "isolated",
-      "stateful": false
+      "stateful": false,
+      "skills": [
+        "qa-solving"
+      ]
     },
     {
       "id": "solver-qwen",
@@ -43,7 +61,10 @@
       "model": "qwen3.6-27b",
       "model_family": "qwen",
       "context": "isolated",
-      "stateful": false
+      "stateful": false,
+      "skills": [
+        "qa-solving"
+      ]
     },
     {
       "id": "selector",
@@ -53,7 +74,10 @@
       "context": "isolated",
       "stateful": false,
       "memoryless": true,
-      "effort": "medium"
+      "effort": "medium",
+      "skills": [
+        "evidence-selection-rubric"
+      ]
     }
   ],
   "tasks": [

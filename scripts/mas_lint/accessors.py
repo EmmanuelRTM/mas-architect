@@ -79,6 +79,23 @@ def agent_path(agent: dict, field: str = "") -> str:
     return f"{base}.{field}" if field else base
 
 
+def agent_skills(agent: dict) -> list[str] | None:
+    """The agent's preloaded skills, or None when the spec does not say."""
+    value = agent.get("skills")
+    if not isinstance(value, list):
+        return None
+    return [s for s in value if isinstance(s, str)]
+
+
+def skill_catalog(spec: dict) -> set[str] | None:
+    """Names in the spec's top-level `skills` catalog (strings or {name}), or None."""
+    value = spec.get("skills")
+    if not isinstance(value, list):
+        return None
+    names = (item.get("name") if isinstance(item, dict) else item for item in value)
+    return {n for n in names if isinstance(n, str)}
+
+
 def walk_strings(node: Any, path: str = "") -> Iterator[tuple[str, str]]:
     """Yield (path, value) for every string anywhere in the spec."""
     if isinstance(node, str):

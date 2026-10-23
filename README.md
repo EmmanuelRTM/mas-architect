@@ -9,10 +9,10 @@ La idea central de la investigación: agregar agentes sube la probabilidad de qu
 | Componente | Contenido |
 |---|---|
 | **Skills** | `mas-design` (flujo completo), `mas-patterns` (8 patrones con evidencia), `mas-selection-verification`, `mas-model-selection` (modelo + esfuerzo por rol), `mas-audit` |
-| **Agentes** | `mas-architect` (opus/high), `mas-critic` revisor ciego sin memoria (fable/medium), `mas-model-planner` (sonnet/medium), `mas-prompt-writer` (opus/medium), `mas-system-auditor` (opus/medium) |
+| **Agentes** | `mas-architect` (opus/high), `mas-critic` revisor ciego sin memoria (fable/medium), `mas-model-planner` (sonnet/medium), `mas-prompt-writer` (opus/medium), `mas-system-auditor` (opus/medium). Cada uno precarga sólo sus skills (ver abajo) |
 | **Comandos** | `/mas-architect:new`, `/mas-architect:lint`, `/mas-architect:models`, `/mas-architect:audit`, `/mas-panel` |
-| **Hooks deterministas** | Bloqueo de secretos por regex, linter de specs `*.mas.json` (29 reglas), linter de agentes/skills (11 reglas DEF), contrato de delegación (criterio de terminado) |
-| **Mod / panel** | Panel lateral en vivo: subagentes activos vs límite de concurrencia, costo y contexto de la sesión, salud del spec por práctica, plan de modelo/esfuerzo y hallazgos principales |
+| **Hooks deterministas** | Bloqueo de secretos por regex, linter de specs `*.mas.json` (33 reglas), linter de agentes/skills (14 reglas DEF, incluidas las skills por agente), contrato de delegación (criterio de terminado) |
+| **Mod / panel** | Panel lateral en vivo: subagentes activos vs límite de concurrencia, costo y contexto de la sesión, salud del spec por práctica, plan de modelo/esfuerzo/skills y hallazgos principales |
 | **Plantillas** | `templates/spec.schema.json` y 5 ejemplos limpios (`deep-research`, `optimization-swarm`, `codebase-team`, `qa-selector`, `agent-router`) |
 
 ## Instalación
@@ -62,6 +62,20 @@ python3 scripts/mas_lint_cli.py rules
 
 Es un punto de partida: barre los niveles de esfuerzo con tus propios evals. Detalle en `skills/mas-model-selection/`.
 
+## Skills por agente
+
+Los subagentes no heredan las skills de la sesión, así que cada agente declara en `skills:` las que precarga. Cada una inyecta su `SKILL.md` completo al arrancar, por eso se limitan a lo que el rol usa siempre.
+
+| Agente | Skills precargadas | Por qué |
+|---|---|---|
+| `mas-architect` | `mas-design`, `mas-patterns`, `mas-selection-verification`, `mas-model-selection` | Diseña de punta a punta |
+| `mas-critic` | `mas-audit`, `mas-selection-verification` | Revisa con la lista de fallas, sin el playbook del autor (independencia del juez) |
+| `mas-model-planner` | `mas-model-selection` | Sólo decide modelo y esfuerzo |
+| `mas-prompt-writer` | `mas-model-selection` | Reglas de prompting por modelo |
+| `mas-system-auditor` | `mas-audit`, `mas-design` | Audita y escribe el spec del sistema existente |
+
+Para los sistemas que diseñes, el spec lleva un catálogo `skills` y una lista `skills` por agente. Las reglas MAS029–MAS032 y DEF012–DEF014 revisan que esté declarada, que exista, que no pase de 4 y que los jueces no compartan el playbook de los generadores. Guía completa: [skill-assignment.md](skills/mas-design/references/skill-assignment.md).
+
 ## Configuración
 
 | Opción (`userConfig`) | Default | Uso |
@@ -79,7 +93,7 @@ Agrega `.mas/` a tu `.gitignore`: contiene reportes generados.
 ## Desarrollo
 
 ```bash
-pytest                    # 150+ tests del linter, hooks y contenido del plugin
+pytest                    # 175+ tests del linter, hooks y contenido del plugin
 claude plugin test .      # tests del panel en terminal, desktop, vscode y mobile
 claude plugin validate .
 ```

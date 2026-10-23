@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.0 — 2026-10-23
+
+- Skills per agent: every plugin agent preloads only the skills its role needs through `skills:` (the blind critic gets the audit checklist, not the architect's playbook).
+- Spec: top-level `skills` catalog and per-agent `skills` list, in the JSON Schema and all five examples.
+- New spec rules MAS029-MAS032: skills declared, present in the catalog, at most 4 preloaded, judges not sharing the generators' playbook.
+- New definition rules DEF012-DEF014: valid and existing skill names (the hook discovers sibling skills), no `Skill` in `tools`, declared and bounded preloads.
+- Report and control panel show each agent's preloaded skill count.
+- New reference `skills/mas-design/references/skill-assignment.md`.
+
 ## 0.1.0 — 2026-10-23
 
 - Skills: `mas-design`, `mas-patterns`, `mas-selection-verification`, `mas-model-selection`, `mas-audit`.

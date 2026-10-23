@@ -1,6 +1,6 @@
 {
   "name": "mas-architect",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Design, lint and monitor multi-agent systems: evidence-based skills, reviewer agents, deterministic regex/rule hooks, model+effort planning per role and a live control panel.",
   "author": {
     "name": "EmmanuelRTM",

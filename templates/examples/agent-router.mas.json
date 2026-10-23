@@ -15,6 +15,13 @@
     "metric": "routing accuracy",
     "runs": 3
   },
+  "skills": [
+    {
+      "name": "routing-audit-rubric",
+      "description": "How to judge whether a routed tool or agent fit the request",
+      "source": "project"
+    }
+  ],
   "agents": [
     {
       "id": "router",
@@ -23,7 +30,8 @@
       "model_family": "claude",
       "context": "isolated",
       "stateful": false,
-      "effort": "low"
+      "effort": "low",
+      "skills": []
     },
     {
       "id": "route-auditor",
@@ -32,7 +40,10 @@
       "model_family": "openai",
       "context": "isolated",
       "stateful": false,
-      "memoryless": true
+      "memoryless": true,
+      "skills": [
+        "routing-audit-rubric"
+      ]
     }
   ],
   "tasks": [

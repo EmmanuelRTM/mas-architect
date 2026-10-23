@@ -13,6 +13,8 @@ export type PlanRow = {
   effort: string
   recommended: string
   matches: boolean
+  /** Preloaded skills; null when the spec does not declare them. */
+  skills: number | null
 }
 
 export type FindingRow = { ruleId: string; severity: string; message: string }

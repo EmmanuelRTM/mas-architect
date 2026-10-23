@@ -8,6 +8,7 @@ import {
   concurrencyBar,
   concurrencyLevel,
   countAgents,
+  skillsLabel,
   statusGlyph,
   truncate,
 } from './model'
@@ -81,11 +82,11 @@ function PlanSection({ Box, Text }: El, report: ReportView | null, columns: numb
   if (report === null || report.plan.length === 0) return null
   return (
     <Box flexDirection="column" marginTop={1}>
-      <Text bold>Model plan</Text>
+      <Text bold>Model plan (model@effort · skills)</Text>
       {report.plan.map(row => (
         <Text color={row.matches ? undefined : 'warning'}>
           {truncate(
-            `${row.matches ? '✓' : '≠'} ${row.id} (${row.role}×${row.count}) ${row.model}@${row.effort}` +
+            `${row.matches ? '✓' : '≠'} ${row.id} (${row.role}×${row.count}) ${row.model}@${row.effort}${skillsLabel(row.skills)}` +
               (row.matches ? '' : ` → ${row.recommended}`),
             columns,
           )}

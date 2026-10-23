@@ -16,6 +16,18 @@
     "metric": "cycles (lower is better)",
     "runs": 3
   },
+  "skills": [
+    {
+      "name": "search-strategy",
+      "description": "How the advisor proposes directions from the leaderboard",
+      "source": "project"
+    },
+    {
+      "name": "kernel-tuning",
+      "description": "Playbook for proposing and testing kernel variants",
+      "source": "project"
+    }
+  ],
   "agents": [
     {
       "id": "advisor",
@@ -24,7 +36,10 @@
       "model_family": "claude",
       "context": "isolated",
       "stateful": false,
-      "effort": "medium"
+      "effort": "medium",
+      "skills": [
+        "search-strategy"
+      ]
     },
     {
       "id": "worker",
@@ -36,7 +51,10 @@
       "stateful": false,
       "heartbeat_seconds": 120,
       "effort": "high",
-      "max_tokens": 128000
+      "max_tokens": 128000,
+      "skills": [
+        "kernel-tuning"
+      ]
     },
     {
       "id": "worker-alt",
@@ -46,7 +64,10 @@
       "model_family": "openai",
       "context": "isolated",
       "stateful": false,
-      "heartbeat_seconds": 120
+      "heartbeat_seconds": 120,
+      "skills": [
+        "kernel-tuning"
+      ]
     },
     {
       "id": "evaluator",
@@ -55,7 +76,8 @@
       "model_family": "none",
       "context": "isolated",
       "stateful": false,
-      "memoryless": true
+      "memoryless": true,
+      "skills": []
     }
   ],
   "tasks": [

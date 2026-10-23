@@ -119,3 +119,18 @@ def test_hooks_survive_garbage_input():
         [sys.executable, str(SCRIPTS / "hook_lint_spec.py")], input="not json", capture_output=True, text=True
     )
     assert proc.returncode == 0
+
+
+def test_definitions_hook_flags_unknown_sibling_skill(tmp_path):
+    (tmp_path / "skills" / "qa-rubric").mkdir(parents=True)
+    (tmp_path / "skills" / "qa-rubric" / "SKILL.md").write_text("---\nname: qa-rubric\ndescription: d\n---\nBody\n")
+    (tmp_path / "agents").mkdir()
+    agent = tmp_path / "agents" / "judge.md"
+    agent.write_text(
+        "---\nname: judge\ndescription: Grades answers. Use after solving.\ntools: Read\n"
+        "skills:\n  - qa-rubrik\nmodel: opus\neffort: high\n---\nGrade the answers.\n"
+    )
+    payload = {"tool_name": "Write", "cwd": str(tmp_path), "tool_input": {"file_path": str(agent)}}
+    out = run_hook("hook_validate_definitions.py", payload)
+    assert "DEF012" in out["hookSpecificOutput"]["additionalContext"]
+    assert "qa-rubrik" in out["hookSpecificOutput"]["additionalContext"]

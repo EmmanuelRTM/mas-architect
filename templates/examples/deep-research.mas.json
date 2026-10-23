@@ -21,6 +21,38 @@
     "planner_ensemble": 3,
     "joint_exploration": false
   },
+  "skills": [
+    {
+      "name": "report-spec-planning",
+      "description": "How to turn a question into a sectioned report spec",
+      "source": "project"
+    },
+    {
+      "name": "spec-review-rubric",
+      "description": "Criteria for picking the best report spec",
+      "source": "project"
+    },
+    {
+      "name": "source-search",
+      "description": "Search and source-quality playbook for section research",
+      "source": "project"
+    },
+    {
+      "name": "citation-format",
+      "description": "Inline citation format shared by researchers and the editor",
+      "source": "project"
+    },
+    {
+      "name": "report-style",
+      "description": "House style for the final report",
+      "source": "project"
+    },
+    {
+      "name": "citation-check-rubric",
+      "description": "How to verify that each citation supports its claim",
+      "source": "project"
+    }
+  ],
   "agents": [
     {
       "id": "planner",
@@ -31,7 +63,10 @@
       "context": "isolated",
       "stateful": false,
       "effort": "high",
-      "max_tokens": 128000
+      "max_tokens": 128000,
+      "skills": [
+        "report-spec-planning"
+      ]
     },
     {
       "id": "spec-judge",
@@ -40,7 +75,10 @@
       "model_family": "openai",
       "context": "isolated",
       "stateful": false,
-      "memoryless": true
+      "memoryless": true,
+      "skills": [
+        "spec-review-rubric"
+      ]
     },
     {
       "id": "section-researcher",
@@ -52,7 +90,11 @@
       "stateful": false,
       "heartbeat_seconds": 60,
       "effort": "high",
-      "max_tokens": 128000
+      "max_tokens": 128000,
+      "skills": [
+        "source-search",
+        "citation-format"
+      ]
     },
     {
       "id": "global-editor",
@@ -62,7 +104,11 @@
       "context": "isolated",
       "stateful": false,
       "effort": "medium",
-      "max_tokens": 128000
+      "max_tokens": 128000,
+      "skills": [
+        "citation-format",
+        "report-style"
+      ]
     },
     {
       "id": "citation-verifier",
@@ -71,7 +117,10 @@
       "model_family": "google",
       "context": "isolated",
       "stateful": false,
-      "memoryless": true
+      "memoryless": true,
+      "skills": [
+        "citation-check-rubric"
+      ]
     }
   ],
   "tasks": [

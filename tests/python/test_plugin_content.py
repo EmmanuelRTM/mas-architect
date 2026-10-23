@@ -69,3 +69,25 @@ def test_rules_doc_lists_every_rule():
     doc = (ROOT / "docs" / "RULES.md").read_text(encoding="utf-8")
     missing = [r.id for r in registered() if f"| {r.id} |" not in doc]
     assert missing == [], "regenerate docs/RULES.md"
+
+
+@pytest.mark.parametrize("path", AGENTS, ids=lambda p: p.stem)
+def test_every_agent_preloads_only_existing_plugin_skills(path):
+    from mas_lint import frontmatter
+    from mas_lint.skill_refs import MAX_PRELOADED_SKILLS, bare_name, parse_skill_list
+
+    skills = parse_skill_list(frontmatter.parse(path.read_text(encoding="utf-8")).fields.get("skills"))
+    assert 1 <= len(skills) <= MAX_PRELOADED_SKILLS
+    assert {bare_name(s) for s in skills} <= EXPECTED_SKILLS
+
+
+def test_blind_critic_does_not_share_the_architects_playbook():
+    from mas_lint import frontmatter
+    from mas_lint.skill_refs import parse_skill_list
+
+    def skills_of(stem):
+        text = (ROOT / "agents" / f"{stem}.md").read_text(encoding="utf-8")
+        return set(parse_skill_list(frontmatter.parse(text).fields.get("skills")))
+
+    assert "mas-design" not in skills_of("mas-critic")
+    assert "mas-design" in skills_of("mas-architect")

@@ -20,6 +20,18 @@
     "joint_exploration": true,
     "negotiated_partition": true
   },
+  "skills": [
+    {
+      "name": "codebase-map",
+      "description": "How to explore the repository and post claims to the shared map",
+      "source": "project"
+    },
+    {
+      "name": "evidence-trace-rubric",
+      "description": "How to check that every claim cites a file and line",
+      "source": "project"
+    }
+  ],
   "agents": [
     {
       "id": "explorer",
@@ -31,7 +43,10 @@
       "stateful": false,
       "heartbeat_seconds": 90,
       "effort": "medium",
-      "max_tokens": 128000
+      "max_tokens": 128000,
+      "skills": [
+        "codebase-map"
+      ]
     },
     {
       "id": "explorer-alt",
@@ -41,7 +56,10 @@
       "model_family": "deepseek",
       "context": "isolated",
       "stateful": false,
-      "heartbeat_seconds": 90
+      "heartbeat_seconds": 90,
+      "skills": [
+        "codebase-map"
+      ]
     },
     {
       "id": "answer-reviewer",
@@ -52,7 +70,10 @@
       "stateful": false,
       "memoryless": true,
       "effort": "high",
-      "max_tokens": 128000
+      "max_tokens": 128000,
+      "skills": [
+        "evidence-trace-rubric"
+      ]
     }
   ],
   "tasks": [

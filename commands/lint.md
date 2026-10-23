@@ -1,5 +1,5 @@
 ---
-description: Lint a .mas.json multi-agent spec against the 29 evidence-based rules.
+description: Lint a .mas.json multi-agent spec against the 33 evidence-based rules.
 argument-hint: "<path/to/spec.mas.json>"
 allowed-tools: Bash(python3:*)
 ---

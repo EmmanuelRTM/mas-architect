@@ -90,7 +90,14 @@ function toPlanRow(raw: unknown): PlanRow | null {
     effort,
     recommended,
     matches: `${model}@${effort}` === recommended,
+    skills: Array.isArray(raw.skills) ? raw.skills.length : null,
   }
+}
+
+/** `· 2 skills`, `· 1 skill`, or `· skills?` when undeclared. */
+export function skillsLabel(skills: number | null): string {
+  if (skills === null) return ' · skills?'
+  return ` · ${skills} skill${skills === 1 ? '' : 's'}`
 }
 
 function toFindingRow(raw: unknown): FindingRow | null {
