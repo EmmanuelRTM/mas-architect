@@ -2,9 +2,21 @@
   "name": "mas-architect",
   "version": "0.1.0",
   "description": "Design, lint and monitor multi-agent systems: evidence-based skills, reviewer agents, deterministic regex/rule hooks, model+effort planning per role and a live control panel.",
-  "author": { "name": "EmmanuelRTM", "url": "https://github.com/EmmanuelRTM" },
+  "author": {
+    "name": "EmmanuelRTM",
+    "url": "https://github.com/EmmanuelRTM"
+  },
+  "homepage": "https://github.com/EmmanuelRTM/mas-architect",
+  "repository": "https://github.com/EmmanuelRTM/mas-architect",
   "license": "MIT",
-  "keywords": ["multi-agent", "subagents", "orchestration", "linting", "hooks", "dashboard"],
+  "keywords": [
+    "multi-agent",
+    "subagents",
+    "orchestration",
+    "linting",
+    "hooks",
+    "dashboard"
+  ],
   "types": "./types/index.d.ts",
   "userConfig": {
     "maxConcurrentSubagents": {

@@ -20,7 +20,7 @@ La idea central de la investigación: agregar agentes sube la probabilidad de qu
 Requisitos: Claude Code reciente y `python3` (3.10+) en el `PATH`. Sin dependencias externas; PyYAML es opcional para specs `.mas.yaml`.
 
 ```text
-/plugin install mas-architect --marketplace <owner>/<repo>
+/plugin install mas-architect --marketplace EmmanuelRTM/mas-architect
 ```
 
 Durante el desarrollo, desde la carpeta del repo:
